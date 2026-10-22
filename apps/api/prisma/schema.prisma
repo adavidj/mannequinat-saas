@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MODELE
+  AGENCE
+  FORMATEUR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum ProfileLevel {
+  DEBUTANT
+  CONFIRME
+}
+
+enum ProfileVisibility {
+  PRIVATE
+  VERIFIED_AGENCIES
+  PUBLIC
+}
+
+enum PhotoKind {
+  PORTRAIT
+  FULL_BODY_FRONT
+  FULL_BODY_PROFILE
+  PORTFOLIO
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrganizationType {
+  AGENCY
+  RECRUITER
+  TRAINING_ORGANIZATION
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum SubscriptionPlan {
+  MODEL_PREMIUM
+  AGENCY_STARTER
+  AGENCY_PRO
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum PaymentProvider {
+  FEDAPAY
+  KKIAPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+}
+
+enum ReportTargetType {
+  USER
+  PROFILE
+  ORGANIZATION
+  CONVERSATION
+  MESSAGE
+  PHOTO
+}
+
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id              String      @id @default(cuid())
+  email           String      @unique
+  passwordHash    String
+  role            UserRole
+  emailVerifiedAt DateTime?
+  status          UserStatus  @default(ACTIVE)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  modelProfile     ModelProfile?
+  organizations    Organization[] @relation("OrganizationOwner")
+  sentMessages     Message[]      @relation("MessageSender")
+  subscriptions    Subscription[]
+  payments         Payment[]
+  submittedReports Report[]       @relation("ReportReporter")
+  auditLogs        AuditLog[]     @relation("AuditActor")
+
+  @@index([role, status])
+}
+
+model ModelProfile {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  level              ProfileLevel
+  displayName        String
+  birthDateEncrypted String
+  city               String
+  heightCm           Int?
+  chestCm            Int?
+  waistCm            Int?
+  hipsCm             Int?
+  shoeSize           Int?
+  visibility         ProfileVisibility @default(PRIVATE)
+  bio                String?           @db.Text
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos        Photo[]
+  experiences   Experience[]
+  conversations Conversation[]
+
+  @@index([level, visibility])
+  @@index([city])
+}
+
+model Photo {
+  id                  String           @id @default(cuid())
+  profileId           String
+  storageKey          String           @unique
+  kind                PhotoKind
+  moderationStatus    ModerationStatus @default(PENDING)
+  visibilityConsentAt DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  profile ModelProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, moderationStatus])
+}
+
+model Experience {
+  id        String       @id @default(cuid())
+  profileId String
+  title     String
+  org       String
+  startDate DateTime
+  endDate   DateTime?
+  proofKey  String?
+  verified  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  profile ModelProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, verified])
+}
+
+model Organization {
+  id                 String             @id @default(cuid())
+  ownerId            String
+  type               OrganizationType
+  name               String
+  ifuEncrypted       String?
+  rccmEncrypted      String?
+  verificationStatus VerificationStatus @default(PENDING)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  owner         User           @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  conversations Conversation[]
+
+  @@index([type, verificationStatus])
+  @@index([ownerId])
+}
+
+model Conversation {
+  id             String       @id @default(cuid())
+  organizationId String
+  profileId      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  profile      ModelProfile @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  messages     Message[]
+
+  @@unique([organizationId, profileId])
+  @@index([profileId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String       @db.Text
+  sentAt         DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, sentAt])
+  @@index([senderId])
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  plan      SubscriptionPlan
+  status    SubscriptionStatus @default(PENDING)
+  startsAt  DateTime?
+  renewAt   DateTime?
+  endsAt    DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  userId            String
+  amountFcfa        Int
+  provider          PaymentProvider
+  providerReference String          @unique
+  status            PaymentStatus   @default(PENDING)
+  idempotencyKey    String          @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+}
+
+model Report {
+  id         String           @id @default(cuid())
+  reporterId String
+  targetType ReportTargetType
+  targetId   String
+  reason     String           @db.Text
+  status     ReportStatus     @default(OPEN)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  reporter User @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+
+  @@index([targetType, targetId, status])
+  @@index([reporterId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}
