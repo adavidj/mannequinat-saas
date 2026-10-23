@@ -109,13 +109,15 @@ model User {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  modelProfile     ModelProfile?
-  organizations    Organization[] @relation("OrganizationOwner")
-  sentMessages     Message[]      @relation("MessageSender")
-  subscriptions    Subscription[]
-  payments         Payment[]
-  submittedReports Report[]       @relation("ReportReporter")
-  auditLogs        AuditLog[]     @relation("AuditActor")
+  modelProfile          ModelProfile?
+  organizations         Organization[]        @relation("OrganizationOwner")
+  sentMessages          Message[]             @relation("MessageSender")
+  subscriptions         Subscription[]
+  payments              Payment[]
+  submittedReports      Report[]              @relation("ReportReporter")
+  auditLogs             AuditLog[]            @relation("AuditActor")
+  emailVerificationTokens EmailVerificationToken[]
+  refreshTokens         RefreshToken[]
 
   @@index([role, status])
 }
@@ -281,10 +283,39 @@ model AuditLog {
   entityType String
   entityId   String
   metadata   Json?
+  ipAddress  String?
+  userAgent  String?
   createdAt  DateTime @default(now())
 
   actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([entityType, entityId])
   @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
