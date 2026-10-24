@@ -129,11 +129,11 @@ model ModelProfile {
   displayName        String
   birthDateEncrypted String
   city               String
-  heightCm           Int?
-  chestCm            Int?
-  waistCm            Int?
-  hipsCm             Int?
-  shoeSize           Int?
+  heightCmEncrypted  String?
+  chestCmEncrypted   String?
+  waistCmEncrypted   String?
+  hipsCmEncrypted    String?
+  shoeSizeEncrypted  String?
   visibility         ProfileVisibility @default(PRIVATE)
   bio                String?           @db.Text
   createdAt          DateTime          @default(now())

@@ -30,6 +30,14 @@ export class AppConfigService {
     return Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? 60);
   }
 
+  get dataEncryptionKey(): string {
+    const key = process.env.DATA_ENCRYPTION_KEY;
+    if (!key) {
+      throw new Error('DATA_ENCRYPTION_KEY est obligatoire pour traiter les données de profil sensibles.');
+    }
+    return key;
+  }
+
   get nodeEnv(): string {
     return process.env.NODE_ENV ?? 'development';
   }
