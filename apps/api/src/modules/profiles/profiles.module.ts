@@ -6,10 +6,12 @@ import { ConfigModule } from '../../config/config.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { ProfilesController } from './profiles.controller';
 import { ProfilesService } from './profiles.service';
+import { ExperiencesController } from './experiences.controller';
+import { ExperiencesService } from './experiences.service';
 
 @Module({
   imports: [AuditModule, ConfigModule, PrismaModule],
-  controllers: [ProfilesController],
-  providers: [ProfilesService, FieldEncryptionService],
+  controllers: [ProfilesController, ExperiencesController],
+  providers: [ProfilesService, ExperiencesService, FieldEncryptionService],
 })
 export class ProfilesModule {}
