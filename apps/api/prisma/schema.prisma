@@ -129,11 +129,11 @@ model ModelProfile {
   displayName        String
   birthDateEncrypted String
   city               String
-  heightCm           Int?
-  chestCm            Int?
-  waistCm            Int?
-  hipsCm             Int?
-  shoeSize           Int?
+  heightCmEncrypted  String?
+  chestCmEncrypted   String?
+  waistCmEncrypted   String?
+  hipsCmEncrypted    String?
+  shoeSizeEncrypted  String?
   visibility         ProfileVisibility @default(PRIVATE)
   bio                String?           @db.Text
   createdAt          DateTime          @default(now())
@@ -152,8 +152,13 @@ model Photo {
   id                  String           @id @default(cuid())
   profileId           String
   storageKey          String           @unique
+  mimeType            String
+  sizeBytes           Int
+  width               Int?
+  height              Int?
   kind                PhotoKind
   moderationStatus    ModerationStatus @default(PENDING)
+  visibilityConsent   ProfileVisibility
   visibilityConsentAt DateTime?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
