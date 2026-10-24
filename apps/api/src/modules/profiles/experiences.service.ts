@@ -119,7 +119,15 @@ export class ExperiencesService {
   }
 
   private toOwnerExperience(experience: Experience): OwnerExperience {
-    const { profileId: _profileId, proofKey: _proofKey, ...ownerExperience } = experience;
-    return ownerExperience;
+    return {
+      id: experience.id,
+      title: experience.title,
+      org: experience.org,
+      startDate: experience.startDate,
+      endDate: experience.endDate,
+      verified: experience.verified,
+      createdAt: experience.createdAt,
+      updatedAt: experience.updatedAt,
+    };
   }
 }
