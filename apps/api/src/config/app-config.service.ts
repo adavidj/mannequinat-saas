@@ -38,7 +38,43 @@ export class AppConfigService {
     return key;
   }
 
+  get s3Endpoint(): string {
+    return this.requireValue('S3_ENDPOINT');
+  }
+
+  get s3Region(): string {
+    return this.requireValue('S3_REGION');
+  }
+
+  get s3Bucket(): string {
+    return this.requireValue('S3_BUCKET');
+  }
+
+  get s3AccessKeyId(): string {
+    return this.requireValue('S3_ACCESS_KEY_ID');
+  }
+
+  get s3SecretAccessKey(): string {
+    return this.requireValue('S3_SECRET_ACCESS_KEY');
+  }
+
+  get photoMaxBytes(): number {
+    return 5 * 1024 * 1024;
+  }
+
+  get photoSignedUrlTtlSeconds(): number {
+    return 300;
+  }
+
   get nodeEnv(): string {
     return process.env.NODE_ENV ?? 'development';
+  }
+
+  private requireValue(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+      throw new Error(`${name} est obligatoire pour le stockage privé des photos.`);
+    }
+    return value;
   }
 }

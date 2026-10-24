@@ -10,9 +10,19 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { EmailVerifiedGuard } from './common/guards/email-verified.guard';
 import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
+import { PhotosModule } from './modules/photos/photos.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, AuditModule, AuthModule, UsersModule, RateLimitModule, ProfilesModule],
+  imports: [
+    ConfigModule,
+    PrismaModule,
+    AuditModule,
+    AuthModule,
+    UsersModule,
+    RateLimitModule,
+    ProfilesModule,
+    PhotosModule,
+  ],
   providers: [
     {
       provide: APP_GUARD,

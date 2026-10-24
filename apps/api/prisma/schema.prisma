@@ -152,8 +152,13 @@ model Photo {
   id                  String           @id @default(cuid())
   profileId           String
   storageKey          String           @unique
+  mimeType            String
+  sizeBytes           Int
+  width               Int?
+  height              Int?
   kind                PhotoKind
   moderationStatus    ModerationStatus @default(PENDING)
+  visibilityConsent   ProfileVisibility
   visibilityConsentAt DateTime?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
