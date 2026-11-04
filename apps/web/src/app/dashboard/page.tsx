@@ -317,12 +317,21 @@ async function AdminOverview() {
       </div>
 
       <section className={cardClass}>
-        <h2 className="text-lg font-semibold text-slate-900">Accès rapides</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Files de modération</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Les files de modération complètes arrivent dans le prochain lot. En attendant, les
-          compteurs ci-dessus se rafraîchissent à chaque visite et les décisions déjà prises sont
-          journalisées dans l’audit.
+          Traitez les demandes en attente ; chaque décision est journalisée dans l’audit.
         </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link className={secondaryButtonClass} href="/dashboard/admin/photos">
+            Photos ({photos?.total ?? 0})
+          </Link>
+          <Link className={secondaryButtonClass} href="/dashboard/admin/organisations">
+            Organisations ({organizations?.total ?? 0})
+          </Link>
+          <Link className={secondaryButtonClass} href="/dashboard/admin/signalements">
+            Signalements ({reports?.total ?? 0})
+          </Link>
+        </div>
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
           <li>Les photos en attente restent invisibles aux agences jusqu’à approbation.</li>
           <li>Les organisations non vérifiées n’accèdent ni à la découverte ni à la messagerie.</li>

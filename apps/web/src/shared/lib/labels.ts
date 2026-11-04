@@ -1,8 +1,11 @@
 import type {
   ModerationStatus,
   OrganizationType,
+  PhotoKind,
   ProfileLevel,
   ProfileVisibility,
+  ReportStatus,
+  ReportTargetType,
   UserRole,
   VerificationStatus,
 } from '../types/api';
@@ -53,6 +56,36 @@ export const VERIFICATION_STYLES: Record<VerificationStatus, string> = {
   PENDING: 'bg-amber-50 text-amber-800 ring-amber-200',
   VERIFIED: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
   REJECTED: 'bg-red-50 text-red-800 ring-red-200',
+};
+
+export const PHOTO_KIND_LABELS: Record<PhotoKind, string> = {
+  PORTRAIT: 'Portrait',
+  FULL_BODY_FRONT: 'Plein pied — face',
+  FULL_BODY_PROFILE: 'Plein pied — profil',
+  PORTFOLIO: 'Portfolio',
+};
+
+export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
+  OPEN: 'Ouvert',
+  IN_REVIEW: 'En cours',
+  RESOLVED: 'Résolu',
+  DISMISSED: 'Classé sans suite',
+};
+
+export const REPORT_STATUS_STYLES: Record<ReportStatus, string> = {
+  OPEN: 'bg-red-50 text-red-800 ring-red-200',
+  IN_REVIEW: 'bg-amber-50 text-amber-800 ring-amber-200',
+  RESOLVED: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  DISMISSED: 'bg-slate-100 text-slate-700 ring-slate-200',
+};
+
+export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
+  USER: 'Compte',
+  PROFILE: 'Profil',
+  ORGANIZATION: 'Organisation',
+  CONVERSATION: 'Conversation',
+  MESSAGE: 'Message',
+  PHOTO: 'Photo',
 };
 
 export function formatDate(value: string | null | undefined): string {

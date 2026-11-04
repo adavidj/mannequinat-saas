@@ -24,6 +24,7 @@ const ROLE_RULES: RoleRule[] = [
   { prefix: '/dashboard/profil', roles: ['MODELE'] },
   { prefix: '/dashboard/photos', roles: ['MODELE'] },
   { prefix: '/dashboard/decouverte', roles: ['AGENCE'] },
+  { prefix: '/dashboard/messages', roles: ['MODELE', 'AGENCE'] },
   { prefix: '/dashboard/organisation', roles: ['AGENCE', 'FORMATEUR'] },
   { prefix: '/dashboard/admin', roles: ['ADMIN'] },
 ];

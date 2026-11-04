@@ -10,7 +10,6 @@ import type { SessionUser } from '@/shared/types/api';
 type NavItem = {
   href: string;
   label: string;
-  soon?: boolean;
 };
 
 function navItemsForRole(role: SessionUser['role']): NavItem[] {
@@ -21,20 +20,36 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       ...common,
       { href: '/dashboard/profil', label: 'Mon profil' },
       { href: '/dashboard/photos', label: 'Mes photos' },
-      { href: '/dashboard/messages', label: 'Messagerie', soon: true },
+      { href: '/dashboard/messages', label: 'Messagerie' },
     ];
   }
 
-  if (role === 'AGENCE' || role === 'FORMATEUR') {
+  if (role === 'AGENCE') {
     return [
       ...common,
       { href: '/dashboard/organisation', label: 'Mon organisation' },
-      { href: '/dashboard/decouverte', label: 'Découverte', soon: true },
-      { href: '/dashboard/messages', label: 'Messagerie', soon: true },
+      { href: '/dashboard/decouverte', label: 'Découverte' },
+      { href: '/dashboard/messages', label: 'Messagerie' },
     ];
   }
 
-  return [...common, { href: '/dashboard/admin', label: 'Back-office', soon: true }];
+  if (role === 'FORMATEUR') {
+    return [...common, { href: '/dashboard/organisation', label: 'Mon organisation' }];
+  }
+
+  return [
+    ...common,
+    { href: '/dashboard/admin/photos', label: 'Modération photos' },
+    { href: '/dashboard/admin/organisations', label: 'Vérifications' },
+    { href: '/dashboard/admin/signalements', label: 'Signalements' },
+  ];
+}
+
+function isActivePath(pathname: string, href: string): boolean {
+  if (href === '/dashboard') {
+    return pathname === href;
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function DashboardShell({ user, children }: { user: SessionUser; children: ReactNode }) {
@@ -79,7 +94,7 @@ export function DashboardShell({ user, children }: { user: SessionUser; children
 
         <nav className="mx-auto flex w-full max-w-7xl gap-1 overflow-x-auto px-4 pb-2 sm:px-6 lg:hidden">
           {items.map((item) => (
-            <NavLink key={item.href} item={item} active={pathname === item.href} />
+            <NavLink key={item.href} item={item} active={isActivePath(pathname, item.href)} />
           ))}
         </nav>
       </header>
@@ -88,7 +103,12 @@ export function DashboardShell({ user, children }: { user: SessionUser; children
         <aside className="hidden lg:block">
           <nav className="sticky top-24 space-y-1">
             {items.map((item) => (
-              <NavLink key={item.href} item={item} active={pathname === item.href} block />
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActivePath(pathname, item.href)}
+                block
+              />
             ))}
           </nav>
         </aside>
@@ -111,20 +131,6 @@ function NavLink({
   const base = block
     ? 'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition'
     : 'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition';
-
-  if (item.soon) {
-    return (
-      <span
-        className={`${base} cursor-not-allowed text-slate-400`}
-        title="Disponible dans un prochain lot"
-      >
-        {item.label}
-        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-          bientôt
-        </span>
-      </span>
-    );
-  }
 
   return (
     <Link

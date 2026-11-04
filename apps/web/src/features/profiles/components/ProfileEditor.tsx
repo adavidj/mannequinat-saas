@@ -49,13 +49,17 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
 
   const visibility = watch('visibility');
   const canBePublic = profile?.level === 'CONFIRME';
+  const isCreation = !profile;
 
   const onSubmit = handleSubmit(async (values) => {
     setFeedback(null);
+    const payload = formValuesToPayload(values);
     try {
       const saved = await browserApi<ModelProfile>('/profiles/me', {
         method: profile ? 'PATCH' : 'POST',
-        body: JSON.stringify(formValuesToPayload(values)),
+        // La création est toujours privée : la visibilité s'ouvre après
+        // l'approbation des trois photos guidées.
+        body: JSON.stringify(isCreation ? { ...payload, visibility: 'PRIVATE' } : payload),
       });
       setProfile(saved);
       reset(profileToFormValues(saved));
@@ -195,20 +199,33 @@ export function ProfileEditor({ initialProfile }: ProfileEditorProps) {
             <label className={labelClass} htmlFor="visibility">
               Qui peut consulter mon profil ?
             </label>
-            <select id="visibility" className={inputClass} {...register('visibility')}>
-              <option value="PRIVATE">Privé — personne</option>
-              <option value="VERIFIED_AGENCIES">Agences vérifiées uniquement</option>
-              {canBePublic ? <option value="PUBLIC">Public</option> : null}
+            <select
+              id="visibility"
+              className={inputClass}
+              disabled={isCreation}
+              {...register('visibility')}
+            >
+              {isCreation ? (
+                <option value="PRIVATE">Privé — personne</option>
+              ) : (
+                <>
+                  <option value="PRIVATE">Privé — personne</option>
+                  <option value="VERIFIED_AGENCIES">Agences vérifiées uniquement</option>
+                  {canBePublic ? <option value="PUBLIC">Public</option> : null}
+                </>
+              )}
             </select>
             {errors.visibility ? (
               <p className={errorTextClass}>{errors.visibility.message}</p>
             ) : null}
             <p className={hintTextClass}>
-              {visibility === 'PRIVATE'
-                ? 'Votre profil reste invisible. Les photos restent stockées et modérées.'
-                : visibility === 'VERIFIED_AGENCIES'
-                  ? 'Nécessite un portrait et deux photos en pied approuvés.'
-                  : 'Réservé aux profils confirmés : un profil débutant ne peut jamais être public.'}
+              {isCreation
+                ? 'Votre profil est créé en privé. Vous pourrez choisir sa visibilité après l’approbation de vos trois photos guidées.'
+                : visibility === 'PRIVATE'
+                  ? 'Votre profil reste invisible. Les photos restent stockées et modérées.'
+                  : visibility === 'VERIFIED_AGENCIES'
+                    ? 'Nécessite un portrait et deux photos en pied approuvés.'
+                    : 'Réservé aux profils confirmés : un profil débutant ne peut jamais être public.'}
             </p>
           </div>
         </section>
