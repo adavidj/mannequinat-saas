@@ -12,20 +12,16 @@ function createService() {
     conversation: {
       findUnique: vi.fn().mockResolvedValue(null),
       count: vi.fn().mockResolvedValue(0),
-      create: vi
-        .fn()
-        .mockResolvedValue({
-          id: 'conversation-1',
-          profileId: 'profile-1',
-          organizationId: 'organization-1',
-        }),
-      findFirst: vi
-        .fn()
-        .mockResolvedValue({
-          id: 'conversation-1',
-          profileId: 'profile-1',
-          organizationId: 'organization-1',
-        }),
+      create: vi.fn().mockResolvedValue({
+        id: 'conversation-1',
+        profileId: 'profile-1',
+        organizationId: 'organization-1',
+      }),
+      findFirst: vi.fn().mockResolvedValue({
+        id: 'conversation-1',
+        profileId: 'profile-1',
+        organizationId: 'organization-1',
+      }),
       findMany: vi.fn().mockResolvedValue([]),
     },
     profileOrganizationBlock: {

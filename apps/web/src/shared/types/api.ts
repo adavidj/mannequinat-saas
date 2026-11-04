@@ -145,3 +145,24 @@ export type OwnedPhotoWithUrl = OwnedPhoto & {
   signedUrl: string;
   signedUrlExpiresAt: string;
 };
+
+export type OwnedExperience = {
+  id: string;
+  title: string;
+  org: string;
+  startDate: string;
+  endDate: string | null;
+  verified: boolean;
+  hasProof: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminExperience = OwnedExperience & {
+  profile: {
+    id: string;
+    displayName: string;
+    city: string;
+    user: { email: string };
+  };
+};

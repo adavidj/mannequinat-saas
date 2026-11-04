@@ -3,13 +3,20 @@ import Link from 'next/link';
 
 import { apiFetch } from '@/shared/lib/api';
 import { cardClass, secondaryButtonClass } from '@/shared/lib/ui';
-import type { AdminOrganization, AdminPhoto, AdminReport, Paginated } from '@/shared/types/api';
+import type {
+  AdminExperience,
+  AdminOrganization,
+  AdminPhoto,
+  AdminReport,
+  Paginated,
+} from '@/shared/types/api';
 
 export const metadata: Metadata = { title: 'Back-office' };
 
 export default async function AdminHomePage() {
-  const [photos, organizations, reports] = await Promise.all([
+  const [photos, experiences, organizations, reports] = await Promise.all([
     apiFetch<Paginated<AdminPhoto>>('/admin/photos?status=PENDING&take=1'),
+    apiFetch<Paginated<AdminExperience>>('/admin/experiences?verified=false&take=1'),
     apiFetch<Paginated<AdminOrganization>>(
       '/admin/organizations?verificationStatus=PENDING&take=1',
     ),
@@ -22,6 +29,12 @@ export default async function AdminHomePage() {
       title: 'Modération des photos',
       count: photos.total,
       description: 'Approuver ou refuser les photos guidées et les portfolios.',
+    },
+    {
+      href: '/dashboard/admin/experiences',
+      title: 'Vérification des expériences',
+      count: experiences.total,
+      description: 'Valider les expériences et leurs justificatifs pour confirmer un profil.',
     },
     {
       href: '/dashboard/admin/organisations',

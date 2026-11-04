@@ -44,6 +44,15 @@ export class AdminExperiencesController {
     );
   }
 
+  @Get(':experienceId/proof/url')
+  async proofUrl(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('experienceId') experienceId: string,
+    @Req() request: Request,
+  ) {
+    return this.experiences.getReviewProofUrl(user.id, experienceId, this.auditContext(request));
+  }
+
   private auditContext(request: Request): { ipAddress: string | null; userAgent: string | null } {
     return { ipAddress: request.ip ?? null, userAgent: request.headers['user-agent'] ?? null };
   }

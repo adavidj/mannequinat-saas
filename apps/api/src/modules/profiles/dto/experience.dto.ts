@@ -6,7 +6,7 @@ const experienceFields = {
   title: z.string().trim().min(2).max(150),
   org: z.string().trim().min(2).max(150),
   startDate: dateSchema,
-  endDate: dateSchema.optional(),
+  endDate: dateSchema.nullable().optional(),
 };
 
 const chronologicalExperienceSchema = z

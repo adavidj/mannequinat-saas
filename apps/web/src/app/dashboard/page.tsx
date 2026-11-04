@@ -20,13 +20,15 @@ import {
   secondaryButtonClass,
 } from '@/shared/lib/ui';
 import type {
+  AdminExperience,
+  AdminOrganization,
+  AdminPhoto,
+  AdminReport,
   ModelProfile,
+  OwnedExperience,
   OwnedOrganization,
   OwnedPhotoWithUrl,
   Paginated,
-  AdminPhoto,
-  AdminOrganization,
-  AdminReport,
   SessionUser,
 } from '@/shared/types/api';
 
@@ -70,7 +72,7 @@ export default async function DashboardPage() {
 function roleIntro(role: SessionUser['role']): string {
   switch (role) {
     case 'MODELE':
-      return 'Complétez votre profil, ajoutez vos trois photos guidées et suivez leur modération.';
+      return 'Complétez votre profil, ajoutez vos trois photos guidées et vos expériences, puis suivez leur modération.';
     case 'AGENCE':
       return 'Faites vérifier votre organisation, puis accédez à la découverte et à la messagerie.';
     case 'FORMATEUR':
@@ -81,9 +83,10 @@ function roleIntro(role: SessionUser['role']): string {
 }
 
 async function ModelOverview() {
-  const [profile, photos] = await Promise.all([
+  const [profile, photos, experiences] = await Promise.all([
     apiFetchOrNull<ModelProfile>('/profiles/me'),
     apiFetchOrNull<OwnedPhotoWithUrl[]>('/profiles/me/photos'),
+    apiFetchOrNull<OwnedExperience[]>('/profiles/me/experiences'),
   ]);
 
   if (!profile) {
@@ -114,6 +117,9 @@ async function ModelOverview() {
   ).length;
   const pendingCount = ownedPhotos.filter((photo) => photo.moderationStatus === 'PENDING').length;
   const rejectedCount = ownedPhotos.filter((photo) => photo.moderationStatus === 'REJECTED').length;
+  const ownedExperiences = experiences ?? [];
+  const verifiedExperiences = ownedExperiences.filter((experience) => experience.verified).length;
+  const pendingExperiences = ownedExperiences.filter((experience) => !experience.verified).length;
 
   const steps = [
     {
@@ -133,6 +139,13 @@ async function ModelOverview() {
       action: 'Gérer mes photos',
     },
     {
+      title: 'Une expérience vérifiée',
+      done: verifiedExperiences > 0,
+      detail: `${verifiedExperiences} vérifiée(s)${pendingExperiences ? ` · ${pendingExperiences} en attente` : ''}.`,
+      href: '/dashboard/experiences',
+      action: 'Gérer mes expériences',
+    },
+    {
       title: 'Visibilité agences vérifiées',
       done: profile.visibility !== 'PRIVATE',
       detail: `Visibilité actuelle : ${VISIBILITY_LABELS[profile.visibility]}.`,
@@ -143,9 +156,10 @@ async function ModelOverview() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Niveau" value={PROFILE_LEVEL_LABELS[profile.level]} />
         <StatCard label="Photos approuvées" value={`${approvedGuided} / 3`} />
+        <StatCard label="Expériences vérifiées" value={String(verifiedExperiences)} />
         <StatCard label="Visibilité" value={VISIBILITY_LABELS[profile.visibility]} />
       </div>
 
@@ -300,8 +314,9 @@ async function OrganizationOverview() {
 }
 
 async function AdminOverview() {
-  const [photos, organizations, reports] = await Promise.all([
+  const [photos, experiences, organizations, reports] = await Promise.all([
     apiFetchOrNull<Paginated<AdminPhoto>>('/admin/photos?status=PENDING&take=1'),
+    apiFetchOrNull<Paginated<AdminExperience>>('/admin/experiences?verified=false&take=1'),
     apiFetchOrNull<Paginated<AdminOrganization>>(
       '/admin/organizations?verificationStatus=PENDING&take=1',
     ),
@@ -310,8 +325,9 @@ async function AdminOverview() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Photos à modérer" value={String(photos?.total ?? 0)} />
+        <StatCard label="Expériences à vérifier" value={String(experiences?.total ?? 0)} />
         <StatCard label="Organisations à vérifier" value={String(organizations?.total ?? 0)} />
         <StatCard label="Signalements ouverts" value={String(reports?.total ?? 0)} />
       </div>
@@ -325,6 +341,9 @@ async function AdminOverview() {
           <Link className={secondaryButtonClass} href="/dashboard/admin/photos">
             Photos ({photos?.total ?? 0})
           </Link>
+          <Link className={secondaryButtonClass} href="/dashboard/admin/experiences">
+            Expériences ({experiences?.total ?? 0})
+          </Link>
           <Link className={secondaryButtonClass} href="/dashboard/admin/organisations">
             Organisations ({organizations?.total ?? 0})
           </Link>
@@ -334,8 +353,9 @@ async function AdminOverview() {
         </div>
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
           <li>Les photos en attente restent invisibles aux agences jusqu’à approbation.</li>
+          <li>Une expérience vérifiée fait passer le profil modèle en « confirmé ».</li>
           <li>Les organisations non vérifiées n’accèdent ni à la découverte ni à la messagerie.</li>
-          <li>Chaque consultation de justificatif IFU/RCCM est tracée.</li>
+          <li>Chaque consultation de justificatif est tracée.</li>
         </ul>
       </section>
     </>

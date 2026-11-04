@@ -32,12 +32,16 @@ export class ObjectStorageService {
   }
 
   async putPrivateImage(key: string, body: Buffer): Promise<void> {
+    await this.putPrivateFile(key, body, 'image/webp');
+  }
+
+  async putPrivateFile(key: string, body: Buffer, contentType: string): Promise<void> {
     await this.getClient().send(
       new PutObjectCommand({
         Bucket: this.config.s3Bucket,
         Key: key,
         Body: body,
-        ContentType: 'image/webp',
+        ContentType: contentType,
         CacheControl: 'private, no-store',
       }),
     );
@@ -52,14 +56,17 @@ export class ObjectStorageService {
     );
   }
 
-  async createDownloadUrl(key: string): Promise<{ url: string; expiresAt: Date }> {
+  async createDownloadUrl(
+    key: string,
+    contentType = 'image/webp',
+  ): Promise<{ url: string; expiresAt: Date }> {
     const expiresIn = this.config.photoSignedUrlTtlSeconds;
     const url = await getSignedUrl(
       this.getClient(),
       new GetObjectCommand({
         Bucket: this.config.s3Bucket,
         Key: key,
-        ResponseContentType: 'image/webp',
+        ResponseContentType: contentType,
       }),
       { expiresIn },
     );

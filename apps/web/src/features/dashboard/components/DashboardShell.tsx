@@ -20,6 +20,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       ...common,
       { href: '/dashboard/profil', label: 'Mon profil' },
       { href: '/dashboard/photos', label: 'Mes photos' },
+      { href: '/dashboard/experiences', label: 'Mes expériences' },
       { href: '/dashboard/messages', label: 'Messagerie' },
     ];
   }
@@ -40,6 +41,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
   return [
     ...common,
     { href: '/dashboard/admin/photos', label: 'Modération photos' },
+    { href: '/dashboard/admin/experiences', label: 'Expériences' },
     { href: '/dashboard/admin/organisations', label: 'Vérifications' },
     { href: '/dashboard/admin/signalements', label: 'Signalements' },
   ];

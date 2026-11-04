@@ -1,20 +1,32 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Experience, ProfileLevel, ProfileVisibility } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 
 import { AuditService } from '../../audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ObjectStorageService } from '../../storage/object-storage.service';
 import {
   CreateExperienceDto,
   ReviewExperienceDto,
   UpdateExperienceDto,
 } from './dto/experience.dto';
 
+const MAX_PROOF_BYTES = 10 * 1024 * 1024;
+
 type AuditContext = {
   ipAddress?: string | null;
   userAgent?: string | null;
 };
 
-type OwnerExperience = Omit<Experience, 'profileId' | 'proofKey'>;
+export type UploadedProofFile = {
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+};
+
+type OwnerExperience = Omit<Experience, 'profileId' | 'proofKey'> & {
+  hasProof: boolean;
+};
 
 type ReviewExperience = OwnerExperience & {
   profile: {
@@ -29,6 +41,7 @@ type ReviewExperience = OwnerExperience & {
 export class ExperiencesService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly storage: ObjectStorageService,
     private readonly audit: AuditService,
   ) {}
 
@@ -44,7 +57,7 @@ export class ExperiencesService {
         title: input.title,
         org: input.org,
         startDate: input.startDate,
-        endDate: input.endDate,
+        endDate: input.endDate ?? null,
       },
     });
     await this.log(userId, 'experience.create', experience.id, context);
@@ -68,7 +81,7 @@ export class ExperiencesService {
   ): Promise<OwnerExperience> {
     const experience = await this.findOwnedExperience(userId, experienceId);
     const startDate = input.startDate ?? experience.startDate;
-    const endDate = input.endDate ?? experience.endDate;
+    const endDate = input.endDate === undefined ? experience.endDate : input.endDate;
     if (endDate && endDate < startDate) {
       throw new BadRequestException(
         'La date de fin doit être postérieure ou égale à la date de début.',
@@ -98,8 +111,116 @@ export class ExperiencesService {
   ): Promise<void> {
     const experience = await this.findOwnedExperience(userId, experienceId);
     await this.prisma.experience.delete({ where: { id: experience.id } });
+    if (experience.proofKey) {
+      await this.storage.deleteObject(experience.proofKey).catch(() => undefined);
+    }
     await this.syncProfileLevel(experience.profileId, userId, context);
     await this.log(userId, 'experience.delete', experience.id, context);
+  }
+
+  async uploadOwnedProof(
+    userId: string,
+    experienceId: string,
+    file: UploadedProofFile | undefined,
+    context: AuditContext,
+  ): Promise<OwnerExperience> {
+    const experience = await this.findOwnedExperience(userId, experienceId);
+    if (!file) {
+      throw new BadRequestException('Le justificatif est obligatoire.');
+    }
+    if (file.size > MAX_PROOF_BYTES) {
+      throw new BadRequestException('Le justificatif dépasse la taille maximale de 10 Mo.');
+    }
+
+    const detected = this.detectProofType(file.buffer);
+    if (!detected || detected.mimeType !== file.mimetype) {
+      throw new BadRequestException(
+        'Le justificatif doit être un PDF, un JPEG, un PNG ou un WebP valide.',
+      );
+    }
+
+    const storageKey = `profiles/${experience.profileId}/experiences/${experience.id}/${randomUUID()}${detected.extension}`;
+    await this.storage.putPrivateFile(storageKey, file.buffer, detected.mimeType);
+
+    try {
+      const updated = await this.prisma.experience.update({
+        where: { id: experience.id },
+        // Un nouveau justificatif doit être contrôlé à nouveau.
+        data: { proofKey: storageKey, verified: false },
+      });
+      if (experience.proofKey) {
+        await this.storage.deleteObject(experience.proofKey).catch(() => undefined);
+      }
+      await this.syncProfileLevel(updated.profileId, userId, context);
+      await this.log(userId, 'experience.proof.upload', updated.id, context);
+      return this.toOwnerExperience(updated);
+    } catch (error: unknown) {
+      await this.storage.deleteObject(storageKey).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async deleteOwnedProof(
+    userId: string,
+    experienceId: string,
+    context: AuditContext,
+  ): Promise<OwnerExperience> {
+    const experience = await this.findOwnedExperience(userId, experienceId);
+    if (!experience.proofKey) {
+      throw new NotFoundException('Aucun justificatif à supprimer.');
+    }
+
+    const updated = await this.prisma.experience.update({
+      where: { id: experience.id },
+      data: { proofKey: null, verified: false },
+    });
+    await this.storage.deleteObject(experience.proofKey).catch(() => undefined);
+    await this.syncProfileLevel(updated.profileId, userId, context);
+    await this.log(userId, 'experience.proof.delete', updated.id, context);
+    return this.toOwnerExperience(updated);
+  }
+
+  async getOwnedProofUrl(
+    userId: string,
+    experienceId: string,
+  ): Promise<{ url: string; expiresAt: Date; contentType: string }> {
+    const experience = await this.findOwnedExperience(userId, experienceId);
+    if (!experience.proofKey) {
+      throw new NotFoundException('Aucun justificatif téléversé.');
+    }
+    const contentType = this.contentTypeForProofKey(experience.proofKey);
+    const signed = await this.storage.createDownloadUrl(experience.proofKey, contentType);
+    return { ...signed, contentType };
+  }
+
+  async getReviewProofUrl(
+    adminId: string,
+    experienceId: string,
+    context: AuditContext,
+  ): Promise<{ url: string; expiresAt: Date; contentType: string }> {
+    const experience = await this.prisma.experience.findUnique({
+      where: { id: experienceId },
+      select: { id: true, profileId: true, proofKey: true },
+    });
+    if (!experience) {
+      throw new NotFoundException('Expérience introuvable.');
+    }
+    if (!experience.proofKey) {
+      throw new NotFoundException('Aucun justificatif téléversé pour cette expérience.');
+    }
+
+    const contentType = this.contentTypeForProofKey(experience.proofKey);
+    const signed = await this.storage.createDownloadUrl(experience.proofKey, contentType);
+    await this.audit.log({
+      actorId: adminId,
+      action: 'experience.proof.viewed',
+      entityType: 'experience',
+      entityId: experience.id,
+      metadata: { profileId: experience.profileId },
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    });
+    return { ...signed, contentType };
   }
 
   async listForReview(filters: {
@@ -254,6 +375,45 @@ export class ExperiencesService {
       verified: experience.verified,
       createdAt: experience.createdAt,
       updatedAt: experience.updatedAt,
+      hasProof: Boolean(experience.proofKey),
     };
+  }
+
+  private detectProofType(
+    buffer: Buffer,
+  ): { mimeType: string; extension: '.pdf' | '.jpg' | '.png' | '.webp' } | null {
+    if (buffer.length >= 5 && buffer.subarray(0, 5).toString('ascii') === '%PDF-') {
+      return { mimeType: 'application/pdf', extension: '.pdf' };
+    }
+    if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+      return { mimeType: 'image/jpeg', extension: '.jpg' };
+    }
+    if (
+      buffer.length >= 8 &&
+      buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    ) {
+      return { mimeType: 'image/png', extension: '.png' };
+    }
+    if (
+      buffer.length >= 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+    ) {
+      return { mimeType: 'image/webp', extension: '.webp' };
+    }
+    return null;
+  }
+
+  private contentTypeForProofKey(key: string): string {
+    if (key.endsWith('.pdf')) {
+      return 'application/pdf';
+    }
+    if (key.endsWith('.jpg')) {
+      return 'image/jpeg';
+    }
+    if (key.endsWith('.png')) {
+      return 'image/png';
+    }
+    return 'image/webp';
   }
 }

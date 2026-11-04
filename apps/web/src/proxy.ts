@@ -23,6 +23,7 @@ type RoleRule = { prefix: string; roles: UserRole[] };
 const ROLE_RULES: RoleRule[] = [
   { prefix: '/dashboard/profil', roles: ['MODELE'] },
   { prefix: '/dashboard/photos', roles: ['MODELE'] },
+  { prefix: '/dashboard/experiences', roles: ['MODELE'] },
   { prefix: '/dashboard/decouverte', roles: ['AGENCE'] },
   { prefix: '/dashboard/messages', roles: ['MODELE', 'AGENCE'] },
   { prefix: '/dashboard/organisation', roles: ['AGENCE', 'FORMATEUR'] },
