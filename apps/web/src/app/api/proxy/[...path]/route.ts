@@ -59,7 +59,7 @@ async function forward(
   }
 
   let body: ArrayBuffer | undefined;
-  if (method === 'POST' || method === 'PATCH') {
+  if (method !== 'GET') {
     body = await request.arrayBuffer();
   }
 

@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from './config/config.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AccountModule } from './modules/account/account.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesGuard } from './common/guards/roles.guard';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -22,6 +23,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     PrismaModule,
     AuditModule,
     AuthModule,
+    AccountModule,
     UsersModule,
     RateLimitModule,
     ProfilesModule,

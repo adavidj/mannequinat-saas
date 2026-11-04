@@ -14,6 +14,7 @@ type NavItem = {
 
 function navItemsForRole(role: SessionUser['role']): NavItem[] {
   const common: NavItem[] = [{ href: '/dashboard', label: 'Vue d’ensemble' }];
+  const account: NavItem = { href: '/dashboard/compte', label: 'Mon compte' };
 
   if (role === 'MODELE') {
     return [
@@ -22,6 +23,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       { href: '/dashboard/photos', label: 'Mes photos' },
       { href: '/dashboard/experiences', label: 'Mes expériences' },
       { href: '/dashboard/messages', label: 'Messagerie' },
+      account,
     ];
   }
 
@@ -31,11 +33,12 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       { href: '/dashboard/organisation', label: 'Mon organisation' },
       { href: '/dashboard/decouverte', label: 'Découverte' },
       { href: '/dashboard/messages', label: 'Messagerie' },
+      account,
     ];
   }
 
   if (role === 'FORMATEUR') {
-    return [...common, { href: '/dashboard/organisation', label: 'Mon organisation' }];
+    return [...common, { href: '/dashboard/organisation', label: 'Mon organisation' }, account];
   }
 
   return [
@@ -44,6 +47,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
     { href: '/dashboard/admin/experiences', label: 'Expériences' },
     { href: '/dashboard/admin/organisations', label: 'Vérifications' },
     { href: '/dashboard/admin/signalements', label: 'Signalements' },
+    account,
   ];
 }
 

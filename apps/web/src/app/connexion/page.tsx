@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { AuthShell } from '@/features/auth/components/AuthShell';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 import { safeRedirectPath } from '@/shared/lib/redirect';
+import { alertSuccessClass } from '@/shared/lib/ui';
 
 export const metadata: Metadata = { title: 'Connexion' };
 
 type LoginPageProps = {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; compte?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { next } = await searchParams;
+  const { next, compte } = await searchParams;
 
   return (
     <AuthShell
@@ -27,6 +28,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </>
       }
     >
+      {compte === 'supprime' ? (
+        <p className={alertSuccessClass} role="status">
+          Votre compte a bien été supprimé. Merci d’avoir utilisé ModelBénin.
+        </p>
+      ) : null}
       <LoginForm nextPath={safeRedirectPath(next)} />
     </AuthShell>
   );
