@@ -6,6 +6,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  // Derrière un reverse proxy (Vercel, Nginx, Caddy), request.ip doit rester fiable
+  // pour le rate limiting et le journal d'audit.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  app.enableShutdownHooks();
 
   app.useGlobalPipes(
     new ValidationPipe({

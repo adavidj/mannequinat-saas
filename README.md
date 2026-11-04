@@ -14,15 +14,26 @@ Monorepo du MVP ModelBénin : une plateforme de mise en relation sécurisée ent
 cp .env.example .env
 pnpm install
 docker compose up -d
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
 pnpm dev
 ```
 
 L’API écoute par défaut sur `http://localhost:3001` et sa documentation Swagger sur `/api/docs`. Le front démarre sur `http://localhost:3000`.
 
+Services locaux :
+
+- PostgreSQL : `localhost:5432`
+- Redis : `localhost:6379`
+- MinIO (stockage S3 privé des photos) : API `http://localhost:9000`, console `http://localhost:9001`
+- Le seed crée le compte administrateur à partir de `ADMIN_EMAIL` / `ADMIN_PASSWORD` (voir `.env.example`).
+
 ## Vérifications
 
 ```bash
 pnpm lint
+pnpm typecheck
 pnpm test
 pnpm build
 ```

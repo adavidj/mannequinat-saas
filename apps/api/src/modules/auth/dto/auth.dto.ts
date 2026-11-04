@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { isAtLeast18 } from '../../../common/utils/age';
+
 export const registerSchema = z
   .object({
     email: z.string().email(),
@@ -13,22 +15,10 @@ export const registerSchema = z
     birthDate: z
       .string()
       .optional()
-      .refine((value) => {
-        if (!value) {
-          return true;
-        }
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) {
-          return false;
-        }
-        const now = new Date();
-        let age = now.getFullYear() - date.getFullYear();
-        const month = now.getMonth() - date.getMonth();
-        if (month < 0 || (month === 0 && now.getDate() < date.getDate())) {
-          age -= 1;
-        }
-        return age >= 18;
-      }, 'Seuls les majeurs de 18 ans et plus sont autorisés sur la plateforme.'),
+      .refine(
+        (value) => !value || isAtLeast18(value),
+        'Seuls les majeurs de 18 ans et plus sont autorisés sur la plateforme.',
+      ),
   })
   .refine(
     (data) => {

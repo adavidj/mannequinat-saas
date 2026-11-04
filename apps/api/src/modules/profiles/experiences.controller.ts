@@ -43,7 +43,12 @@ export class ExperiencesController {
     @Body(new ZodValidationPipe(updateExperienceSchema)) body: UpdateExperienceDto,
     @Req() request: Request,
   ) {
-    return this.experiences.updateOwnedExperience(user.id, experienceId, body, this.auditContext(request));
+    return this.experiences.updateOwnedExperience(
+      user.id,
+      experienceId,
+      body,
+      this.auditContext(request),
+    );
   }
 
   @Delete(':experienceId')

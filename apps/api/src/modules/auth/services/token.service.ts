@@ -63,7 +63,9 @@ export class TokenService {
     return token;
   }
 
-  async rotateRefreshToken(token: string): Promise<{ userId: string; refreshToken: string } | null> {
+  async rotateRefreshToken(
+    token: string,
+  ): Promise<{ userId: string; refreshToken: string } | null> {
     const tokenHash = sha256(token);
     const record = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },

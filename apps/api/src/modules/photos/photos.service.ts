@@ -7,6 +7,8 @@ import { AuditService } from '../../audit/audit.service';
 import { AppConfigService } from '../../config/app-config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ObjectStorageService } from '../../storage/object-storage.service';
+import { hasApprovedGuidedPortfolio } from '../profiles/portfolio-requirements';
+import { ModeratePhotoDto } from './dto/moderate-photo.dto';
 import { UploadPhotoDto } from './dto/photo.dto';
 
 const MAX_INPUT_PIXELS = 25_000_000;
@@ -41,6 +43,10 @@ type OwnedPhotoWithUrl = OwnedPhoto & {
   signedUrlExpiresAt: Date;
 };
 
+type ModerationPhoto = OwnedPhotoWithUrl & {
+  profile: { id: string; displayName: string; city: string };
+};
+
 @Injectable()
 export class PhotosService {
   constructor(
@@ -69,7 +75,9 @@ export class PhotosService {
 
     const sourceMimeType = this.detectImageMimeType(file.buffer);
     if (!sourceMimeType || sourceMimeType !== file.mimetype) {
-      throw new BadRequestException('Le type réel du fichier ne correspond pas à une image autorisée.');
+      throw new BadRequestException(
+        'Le type réel du fichier ne correspond pas à une image autorisée.',
+      );
     }
 
     const processed = await this.sanitizeImage(file.buffer);
@@ -136,15 +144,81 @@ export class PhotosService {
     );
   }
 
-  async getOwnedPhotoUrl(userId: string, photoId: string): Promise<{ url: string; expiresAt: Date }> {
+  async getOwnedPhotoUrl(
+    userId: string,
+    photoId: string,
+  ): Promise<{ url: string; expiresAt: Date }> {
     const photo = await this.findOwnedPhoto(userId, photoId);
     return this.storage.createDownloadUrl(photo.storageKey);
+  }
+
+  /**
+   * File de modération : l'admin doit pouvoir voir la photo avant de statuer.
+   * Les URLs signées sont éphémères et l'accès est journalisé.
+   */
+  async listForModeration(filters: {
+    status?: ModerationStatus;
+    take: number;
+    skip: number;
+  }): Promise<{ items: ModerationPhoto[]; total: number; take: number; skip: number }> {
+    const where = filters.status ? { moderationStatus: filters.status } : {};
+    const [photos, total] = await this.prisma.$transaction([
+      this.prisma.photo.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        take: filters.take,
+        skip: filters.skip,
+        include: { profile: { select: { id: true, displayName: true, city: true } } },
+      }),
+      this.prisma.photo.count({ where }),
+    ]);
+
+    const items = await Promise.all(
+      photos.map(async (photo) => {
+        const signed = await this.storage.createDownloadUrl(photo.storageKey);
+        return {
+          ...this.toOwnedPhoto(photo),
+          profile: photo.profile,
+          signedUrl: signed.url,
+          signedUrlExpiresAt: signed.expiresAt,
+        };
+      }),
+    );
+
+    return { items, total, take: filters.take, skip: filters.skip };
+  }
+
+  async getModerationPhotoUrl(
+    adminId: string,
+    photoId: string,
+    context: AuditContext,
+  ): Promise<{ url: string; expiresAt: Date }> {
+    const photo = await this.prisma.photo.findUnique({
+      where: { id: photoId },
+      select: { id: true, storageKey: true, profileId: true },
+    });
+    if (!photo) {
+      throw new NotFoundException('Photo introuvable.');
+    }
+
+    const signed = await this.storage.createDownloadUrl(photo.storageKey);
+    await this.audit.log({
+      actorId: adminId,
+      action: 'photo.moderation.viewed',
+      entityType: 'photo',
+      entityId: photo.id,
+      metadata: { profileId: photo.profileId },
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    });
+    return signed;
   }
 
   async deleteOwnedPhoto(userId: string, photoId: string, context: AuditContext): Promise<void> {
     const photo = await this.findOwnedPhoto(userId, photoId);
     await this.storage.deleteObject(photo.storageKey);
     await this.prisma.photo.delete({ where: { id: photo.id } });
+    await this.makeProfilePrivateIfPortfolioIsIncomplete(photo.profileId);
     await this.audit.log({
       actorId: userId,
       action: 'photo.delete',
@@ -153,6 +227,39 @@ export class PhotosService {
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
     });
+  }
+
+  async moderatePhoto(
+    adminId: string,
+    photoId: string,
+    input: ModeratePhotoDto,
+    context: AuditContext,
+  ): Promise<OwnedPhoto> {
+    const existing = await this.prisma.photo.findUnique({ where: { id: photoId } });
+    if (!existing) {
+      throw new NotFoundException('Photo introuvable.');
+    }
+
+    const photo = await this.prisma.photo.update({
+      where: { id: photoId },
+      data: { moderationStatus: input.moderationStatus },
+    });
+
+    if (input.moderationStatus === ModerationStatus.REJECTED) {
+      await this.makeProfilePrivateIfPortfolioIsIncomplete(photo.profileId);
+    }
+
+    await this.audit.log({
+      actorId: adminId,
+      action: `photo.moderation.${input.moderationStatus.toLowerCase()}`,
+      entityType: 'photo',
+      entityId: photo.id,
+      metadata: { profileId: photo.profileId },
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    });
+
+    return this.toOwnedPhoto(photo);
   }
 
   private async findOwnedPhoto(userId: string, photoId: string): Promise<Photo> {
@@ -166,6 +273,24 @@ export class PhotosService {
       throw new NotFoundException('Photo introuvable.');
     }
     return photo;
+  }
+
+  private async makeProfilePrivateIfPortfolioIsIncomplete(profileId: string): Promise<void> {
+    const profile = await this.prisma.modelProfile.findUnique({ where: { id: profileId } });
+    if (!profile || profile.visibility === ProfileVisibility.PRIVATE) {
+      return;
+    }
+
+    const approvedPhotos = await this.prisma.photo.findMany({
+      where: { profileId, moderationStatus: ModerationStatus.APPROVED },
+      select: { kind: true },
+    });
+    if (!hasApprovedGuidedPortfolio(approvedPhotos.map((photo) => photo.kind))) {
+      await this.prisma.modelProfile.update({
+        where: { id: profileId },
+        data: { visibility: ProfileVisibility.PRIVATE },
+      });
+    }
   }
 
   private detectImageMimeType(buffer: Buffer): 'image/jpeg' | 'image/png' | 'image/webp' | null {

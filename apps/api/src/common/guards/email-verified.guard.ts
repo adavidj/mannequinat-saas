@@ -25,7 +25,7 @@ export class EmailVerifiedGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException("Authentification requise.");
+      throw new ForbiddenException('Authentification requise.');
     }
     if (!user.emailVerifiedAt) {
       throw new ForbiddenException("Vérification de l'e-mail requise pour effectuer cette action.");

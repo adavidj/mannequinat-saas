@@ -6,7 +6,12 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { EmailVerifiedRequired } from '../../common/decorators/email-verified.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { CreateProfileDto, createProfileSchema, UpdateProfileDto, updateProfileSchema } from './dto/profile.dto';
+import {
+  CreateProfileDto,
+  createProfileSchema,
+  UpdateProfileDto,
+  updateProfileSchema,
+} from './dto/profile.dto';
 import { ProfilesService } from './profiles.service';
 
 type AuthenticatedUser = { id: string };

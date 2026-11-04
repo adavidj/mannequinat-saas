@@ -18,7 +18,12 @@ export class FieldEncryptionService {
     const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
     const authTag = cipher.getAuthTag();
 
-    return ['v1', iv.toString('base64'), authTag.toString('base64'), encrypted.toString('base64')].join(':');
+    return [
+      'v1',
+      iv.toString('base64'),
+      authTag.toString('base64'),
+      encrypted.toString('base64'),
+    ].join(':');
   }
 
   decrypt(value: string): string {
@@ -41,9 +46,10 @@ export class FieldEncryptionService {
 
     const decipher = createDecipheriv(ALGORITHM, this.getKey(), iv);
     decipher.setAuthTag(authTag);
-    return Buffer.concat([decipher.update(Buffer.from(encryptedBase64, 'base64')), decipher.final()]).toString(
-      'utf8',
-    );
+    return Buffer.concat([
+      decipher.update(Buffer.from(encryptedBase64, 'base64')),
+      decipher.final(),
+    ]).toString('utf8');
   }
 
   private getKey(): Buffer {

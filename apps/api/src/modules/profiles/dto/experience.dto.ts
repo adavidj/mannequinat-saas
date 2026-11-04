@@ -22,6 +22,9 @@ export type CreateExperienceDto = z.infer<typeof createExperienceSchema>;
 export const updateExperienceSchema = z
   .object(experienceFields)
   .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Au moins un champ doit être modifié.',
+  })
   .refine(
     (data) => {
       if (!data.startDate || !data.endDate) {
@@ -35,3 +38,8 @@ export const updateExperienceSchema = z
     },
   );
 export type UpdateExperienceDto = z.infer<typeof updateExperienceSchema>;
+
+export const reviewExperienceSchema = z.object({
+  verified: z.boolean(),
+});
+export type ReviewExperienceDto = z.infer<typeof reviewExperienceSchema>;

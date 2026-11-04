@@ -10,20 +10,17 @@ import { TokenService } from './services/token.service';
 import { AuditService } from '../../audit/audit.service';
 import * as argon2 from 'argon2';
 import { UserRole } from '@prisma/client';
+import { calculateAge } from '../../common/utils/age';
 
 function isAgeAtLeast18(birthDate: string): boolean {
-  const date = new Date(birthDate);
-  if (Number.isNaN(date.getTime())) {
+  const age = calculateAge(birthDate);
+  if (Number.isNaN(age)) {
     throw new BadRequestException('Date de naissance invalide.');
   }
-  const now = new Date();
-  let age = now.getFullYear() - date.getFullYear();
-  const month = now.getMonth() - date.getMonth();
-  if (month < 0 || (month === 0 && now.getDate() < date.getDate())) {
-    age -= 1;
-  }
   if (age < 18) {
-    throw new ForbiddenException('Seuls les majeurs de 18 ans et plus sont autorisés sur la plateforme.');
+    throw new ForbiddenException(
+      'Seuls les majeurs de 18 ans et plus sont autorisés sur la plateforme.',
+    );
   }
   return true;
 }
@@ -46,7 +43,9 @@ export class AuthService {
   }) {
     if (input.role === 'MODELE') {
       if (!input.birthDate) {
-        throw new BadRequestException('La date de naissance est obligatoire pour un compte modèle.');
+        throw new BadRequestException(
+          'La date de naissance est obligatoire pour un compte modèle.',
+        );
       }
       isAgeAtLeast18(input.birthDate);
     }
@@ -78,7 +77,12 @@ export class AuthService {
     });
 
     return {
-      user: { id: user.id, email: user.email, role: user.role, emailVerifiedAt: user.emailVerifiedAt },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        emailVerifiedAt: user.emailVerifiedAt,
+      },
       accessToken,
       refreshToken,
       emailVerificationToken: verificationToken,
@@ -118,7 +122,12 @@ export class AuthService {
     });
 
     return {
-      user: { id: user.id, email: user.email, role: user.role, emailVerifiedAt: user.emailVerifiedAt },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        emailVerifiedAt: user.emailVerifiedAt,
+      },
       accessToken,
       refreshToken,
     };

@@ -17,7 +17,12 @@ export class RedisThrottlerStorageService extends ThrottlerStorageService {
     limit: number,
     blockDuration: number,
     throttlerName: string,
-  ): Promise<{ totalHits: number; timeToExpire: number; isBlocked: boolean; timeToBlockExpire: number }> {
+  ): Promise<{
+    totalHits: number;
+    timeToExpire: number;
+    isBlocked: boolean;
+    timeToBlockExpire: number;
+  }> {
     const fullKey = `throttle:${throttlerName}:${key}`;
     const now = Date.now();
     const windowStart = now - ttl;

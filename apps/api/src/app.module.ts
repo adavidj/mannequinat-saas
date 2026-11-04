@@ -11,6 +11,10 @@ import { EmailVerifiedGuard } from './common/guards/email-verified.guard';
 import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { PhotosModule } from './modules/photos/photos.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { PhotosModule } from './modules/photos/photos.module';
     RateLimitModule,
     ProfilesModule,
     PhotosModule,
+    OrganizationsModule,
+    DiscoveryModule,
+    MessagingModule,
+    ReportsModule,
   ],
   providers: [
     {

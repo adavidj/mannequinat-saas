@@ -27,14 +27,23 @@ function buildPhoto(overrides: Record<string, unknown> = {}) {
 function createService() {
   const prisma = {
     modelProfile: {
-      findUnique: vi.fn().mockResolvedValue({ id: 'profile-1', visibility: ProfileVisibility.VERIFIED_AGENCIES }),
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({ id: 'profile-1', visibility: ProfileVisibility.VERIFIED_AGENCIES }),
+      update: vi.fn().mockResolvedValue(undefined),
     },
     photo: {
       create: vi.fn().mockResolvedValue(buildPhoto()),
       findMany: vi.fn().mockResolvedValue([buildPhoto()]),
       findFirst: vi.fn().mockResolvedValue(buildPhoto()),
+      findUnique: vi.fn().mockResolvedValue(buildPhoto()),
       delete: vi.fn().mockResolvedValue(buildPhoto()),
+      update: vi
+        .fn()
+        .mockResolvedValue(buildPhoto({ moderationStatus: ModerationStatus.REJECTED })),
+      count: vi.fn().mockResolvedValue(1),
     },
+    $transaction: vi.fn(async (operations: Promise<unknown>[]) => Promise.all(operations)),
   };
   const storage = {
     putPrivateImage: vi.fn().mockResolvedValue(undefined),
@@ -94,7 +103,11 @@ describe('PhotosService', () => {
     await expect(
       service.uploadOwnedPhoto(
         'user-1',
-        { buffer: Buffer.from('not an image'), size: 12, mimetype: 'image/png' } satisfies UploadedImageFile,
+        {
+          buffer: Buffer.from('not an image'),
+          size: 12,
+          mimetype: 'image/png',
+        } satisfies UploadedImageFile,
         { kind: PhotoKind.PORTRAIT, visibilityConsent: true },
         {},
       ),
@@ -107,7 +120,71 @@ describe('PhotosService', () => {
     const { service, prisma, storage } = createService();
     prisma.photo.findFirst.mockResolvedValue(null);
 
-    await expect(service.getOwnedPhotoUrl('user-1', 'other-photo')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getOwnedPhotoUrl('user-1', 'other-photo')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
     expect(storage.createDownloadUrl).not.toHaveBeenCalled();
+  });
+
+  it('gives admins a moderation queue with a signed preview URL', async () => {
+    const { service, prisma, storage } = createService();
+    prisma.photo.findMany.mockResolvedValue([
+      buildPhoto({ profile: { id: 'profile-1', displayName: 'Awa', city: 'Cotonou' } }),
+    ]);
+
+    const result = await service.listForModeration({
+      status: ModerationStatus.PENDING,
+      take: 50,
+      skip: 0,
+    });
+
+    expect(prisma.photo.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { moderationStatus: ModerationStatus.PENDING },
+        include: { profile: { select: { id: true, displayName: true, city: true } } },
+      }),
+    );
+    expect(storage.createDownloadUrl).toHaveBeenCalledWith(
+      'profiles/profile-1/photos/photo-1.webp',
+    );
+    expect(result.items[0]?.profile.displayName).toBe('Awa');
+    expect(result.items[0]?.signedUrl).toBe('https://storage.example.test/signed');
+    expect(result.total).toBe(1);
+  });
+
+  it('lets an admin open a photo preview and traces the access', async () => {
+    const { service, storage, audit } = createService();
+
+    const result = await service.getModerationPhotoUrl('admin-1', 'photo-1', {});
+
+    expect(storage.createDownloadUrl).toHaveBeenCalled();
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'photo.moderation.viewed', entityId: 'photo-1' }),
+    );
+    expect(result.url).toBe('https://storage.example.test/signed');
+  });
+
+  it('allows an admin to reject a photo and records the moderation action', async () => {
+    const { service, prisma, audit } = createService();
+
+    const result = await service.moderatePhoto(
+      'admin-1',
+      'photo-1',
+      { moderationStatus: ModerationStatus.REJECTED },
+      {},
+    );
+
+    expect(prisma.photo.update).toHaveBeenCalledWith({
+      where: { id: 'photo-1' },
+      data: { moderationStatus: ModerationStatus.REJECTED },
+    });
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: 'admin-1', action: 'photo.moderation.rejected' }),
+    );
+    expect(prisma.modelProfile.update).toHaveBeenCalledWith({
+      where: { id: 'profile-1' },
+      data: { visibility: ProfileVisibility.PRIVATE },
+    });
+    expect(result.moderationStatus).toBe(ModerationStatus.REJECTED);
   });
 });

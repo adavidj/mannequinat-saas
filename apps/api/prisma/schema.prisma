@@ -143,6 +143,7 @@ model ModelProfile {
   photos        Photo[]
   experiences   Experience[]
   conversations Conversation[]
+  organizationBlocks ProfileOrganizationBlock[]
 
   @@index([level, visibility])
   @@index([city])
@@ -198,6 +199,7 @@ model Organization {
 
   owner         User           @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   conversations Conversation[]
+  profileBlocks ProfileOrganizationBlock[]
 
   @@index([type, verificationStatus])
   @@index([ownerId])
@@ -216,6 +218,19 @@ model Conversation {
 
   @@unique([organizationId, profileId])
   @@index([profileId])
+}
+
+model ProfileOrganizationBlock {
+  id             String       @id @default(cuid())
+  profileId      String
+  organizationId String
+  createdAt      DateTime     @default(now())
+
+  profile      ModelProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([profileId, organizationId])
+  @@index([organizationId])
 }
 
 model Message {
