@@ -199,10 +199,21 @@ export default function HomePage() {
       <footer className="border-t border-slate-200 bg-white py-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} ModelBénin — Cotonou, Bénin.</p>
-          <p>
-            Mentions légales, CGU et politique de confidentialité en cours de rédaction avant
-            l’ouverture publique.
-          </p>
+          <nav className="flex flex-wrap gap-4">
+            <Link
+              className="font-medium text-slate-600 hover:text-slate-900"
+              href="/mentions-legales"
+            >
+              Mentions légales
+            </Link>
+            <Link
+              className="font-medium text-slate-600 hover:text-slate-900"
+              href="/confidentialite"
+            >
+              Politique de confidentialité
+            </Link>
+            <span>CGU en cours de rédaction avant l’ouverture publique.</span>
+          </nav>
         </div>
       </footer>
     </div>
