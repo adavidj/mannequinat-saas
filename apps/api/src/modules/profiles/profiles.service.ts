@@ -138,6 +138,19 @@ export class ProfilesService {
       },
     });
 
+    // Le consentement de visibilité est porté par les photos : quand le modèle
+    // change son réglage, toutes ses photos suivent immédiatement, sans
+    // re-téléversement. C'est une action explicite du modèle.
+    if (input.visibility && input.visibility !== existing.visibility) {
+      await this.prisma.photo.updateMany({
+        where: { profileId: existing.id },
+        data: {
+          visibilityConsent: input.visibility,
+          visibilityConsentAt: new Date(),
+        },
+      });
+    }
+
     await this.audit.log({
       actorId: userId,
       action: 'profile.update',

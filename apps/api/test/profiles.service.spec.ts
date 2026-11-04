@@ -40,6 +40,7 @@ function createService(
     },
     photo: {
       findMany: vi.fn().mockResolvedValue(approvedPhotoKinds.map((kind) => ({ kind }))),
+      updateMany: vi.fn().mockResolvedValue({ count: 3 }),
     },
   };
   const encryption = {
@@ -151,5 +152,13 @@ describe('ProfilesService', () => {
     );
 
     expect(prisma.modelProfile.update).toHaveBeenCalled();
+    expect(prisma.photo.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { profileId: 'profile-1' },
+        data: expect.objectContaining({
+          visibilityConsent: ProfileVisibility.VERIFIED_AGENCIES,
+        }),
+      }),
+    );
   });
 });
