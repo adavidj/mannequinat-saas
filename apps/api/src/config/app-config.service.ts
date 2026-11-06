@@ -72,6 +72,18 @@ export class AppConfigService {
     return process.env.NODE_ENV ?? 'development';
   }
 
+  get mailApiKey(): string | null {
+    return process.env.RESEND_API_KEY ?? null;
+  }
+
+  get mailFrom(): string {
+    return process.env.MAIL_FROM ?? 'ModelBénin <notifications@modelbenin.local>';
+  }
+
+  get appPublicUrl(): string {
+    return (process.env.APP_PUBLIC_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+  }
+
   private requireValue(name: string): string {
     const value = process.env[name];
     if (!value) {

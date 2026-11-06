@@ -5,7 +5,14 @@ import { UserRole } from '@prisma/client';
 
 describe('AuthService basics', () => {
   it('exposes register/login/verifyEmail/refresh/logout', () => {
-    const auth = new AuthService({} as never, {} as never, {} as never);
+    const auth = new AuthService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
     expect(typeof auth.register).toBe('function');
     expect(typeof auth.login).toBe('function');
     expect(typeof auth.verifyEmail).toBe('function');

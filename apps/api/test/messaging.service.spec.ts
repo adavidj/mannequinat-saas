@@ -21,6 +21,8 @@ function createService() {
         id: 'conversation-1',
         profileId: 'profile-1',
         organizationId: 'organization-1',
+        profile: { userId: 'model-user', displayName: 'Awa' },
+        organization: { ownerId: 'agency-1', name: 'Agence Exemple' },
       }),
       findMany: vi.fn().mockResolvedValue([]),
     },
@@ -40,11 +42,18 @@ function createService() {
     requireVerifiedRecruiterOrganization: vi.fn().mockResolvedValue({ id: 'organization-1' }),
   };
   const audit = { log: vi.fn().mockResolvedValue(undefined) };
+  const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
   return {
-    service: new MessagingService(prisma as never, organizations as never, audit as never),
+    service: new MessagingService(
+      prisma as never,
+      organizations as never,
+      audit as never,
+      notifications as never,
+    ),
     prisma,
     organizations,
     audit,
+    notifications,
   };
 }
 
@@ -134,7 +143,7 @@ describe('MessagingService', () => {
         id: 'profile-1',
         visibility: { in: [ProfileVisibility.VERIFIED_AGENCIES, ProfileVisibility.PUBLIC] },
       },
-      select: { id: true },
+      select: { id: true, userId: true },
     });
   });
 });

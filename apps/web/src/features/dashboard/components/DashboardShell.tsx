@@ -14,6 +14,10 @@ type NavItem = {
 
 function navItemsForRole(role: SessionUser['role']): NavItem[] {
   const common: NavItem[] = [{ href: '/dashboard', label: 'Vue d’ensemble' }];
+  const notifications: NavItem = {
+    href: '/dashboard/notifications',
+    label: 'Notifications',
+  };
   const account: NavItem = { href: '/dashboard/compte', label: 'Mon compte' };
 
   if (role === 'MODELE') {
@@ -23,6 +27,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       { href: '/dashboard/photos', label: 'Mes photos' },
       { href: '/dashboard/experiences', label: 'Mes expériences' },
       { href: '/dashboard/messages', label: 'Messagerie' },
+      notifications,
       account,
     ];
   }
@@ -33,12 +38,18 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       { href: '/dashboard/organisation', label: 'Mon organisation' },
       { href: '/dashboard/decouverte', label: 'Découverte' },
       { href: '/dashboard/messages', label: 'Messagerie' },
+      notifications,
       account,
     ];
   }
 
   if (role === 'FORMATEUR') {
-    return [...common, { href: '/dashboard/organisation', label: 'Mon organisation' }, account];
+    return [
+      ...common,
+      { href: '/dashboard/organisation', label: 'Mon organisation' },
+      notifications,
+      account,
+    ];
   }
 
   return [
@@ -47,6 +58,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
     { href: '/dashboard/admin/experiences', label: 'Expériences' },
     { href: '/dashboard/admin/organisations', label: 'Vérifications' },
     { href: '/dashboard/admin/signalements', label: 'Signalements' },
+    notifications,
     account,
   ];
 }
@@ -58,11 +70,23 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DashboardShell({ user, children }: { user: SessionUser; children: ReactNode }) {
+export function DashboardShell({
+  user,
+  unreadNotifications = 0,
+  children,
+}: {
+  user: SessionUser;
+  unreadNotifications?: number;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const items = navItemsForRole(user.role);
+
+  function badgeFor(item: NavItem): number {
+    return item.href === '/dashboard/notifications' ? unreadNotifications : 0;
+  }
 
   async function logout() {
     setLoggingOut(true);
@@ -100,7 +124,12 @@ export function DashboardShell({ user, children }: { user: SessionUser; children
 
         <nav className="mx-auto flex w-full max-w-7xl gap-1 overflow-x-auto px-4 pb-2 sm:px-6 lg:hidden">
           {items.map((item) => (
-            <NavLink key={item.href} item={item} active={isActivePath(pathname, item.href)} />
+            <NavLink
+              key={item.href}
+              item={item}
+              active={isActivePath(pathname, item.href)}
+              badge={badgeFor(item)}
+            />
           ))}
         </nav>
       </header>
@@ -113,6 +142,7 @@ export function DashboardShell({ user, children }: { user: SessionUser; children
                 key={item.href}
                 item={item}
                 active={isActivePath(pathname, item.href)}
+                badge={badgeFor(item)}
                 block
               />
             ))}
@@ -128,15 +158,17 @@ export function DashboardShell({ user, children }: { user: SessionUser; children
 function NavLink({
   item,
   active,
+  badge = 0,
   block = false,
 }: {
   item: NavItem;
   active: boolean;
+  badge?: number;
   block?: boolean;
 }) {
   const base = block
-    ? 'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition'
-    : 'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition';
+    ? 'flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition'
+    : 'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition';
 
   return (
     <Link
@@ -147,7 +179,15 @@ function NavLink({
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
       }`}
     >
-      {item.label}
+      <span>{item.label}</span>
+      {badge > 0 ? (
+        <span
+          className="rounded-full bg-brand-700 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white"
+          aria-label={`${badge} notification${badge > 1 ? 's' : ''} non lue${badge > 1 ? 's' : ''}`}
+        >
+          {badge > 99 ? '99+' : badge}
+        </span>
+      ) : null}
     </Link>
   );
 }

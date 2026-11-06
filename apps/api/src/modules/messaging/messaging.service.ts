@@ -9,6 +9,7 @@ import { ProfileVisibility, ReportTargetType, UserRole, VerificationStatus } fro
 
 import { AuditService } from '../../audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { CreateConversationDto, ReportConversationDto, SendMessageDto } from './dto/messaging.dto';
 
@@ -22,6 +23,7 @@ export class MessagingService {
     private readonly prisma: PrismaService,
     private readonly organizations: OrganizationsService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createConversation(userId: string, input: CreateConversationDto, context: AuditContext) {
@@ -34,7 +36,7 @@ export class MessagingService {
         id: input.profileId,
         visibility: { in: [ProfileVisibility.VERIFIED_AGENCIES, ProfileVisibility.PUBLIC] },
       },
-      select: { id: true },
+      select: { id: true, userId: true },
     });
     if (!profile) {
       throw new NotFoundException(
@@ -75,6 +77,13 @@ export class MessagingService {
       metadata: { organizationId: organization.id, profileId: profile.id },
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
+    });
+    await this.notifications.notify({
+      userId: profile.userId,
+      type: 'MESSAGE_RECEIVED',
+      title: 'Une agence souhaite vous contacter',
+      body: 'Une agence vérifiée a ouvert une conversation avec votre profil. Répondez-lui depuis la messagerie.',
+      link: `/dashboard/messages/${conversation.id}`,
     });
     return conversation;
   }
@@ -152,6 +161,17 @@ export class MessagingService {
       metadata: { conversationId },
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
+    });
+
+    const isAgency = role === UserRole.AGENCE;
+    await this.notifications.notify({
+      userId: isAgency ? conversation.profile.userId : conversation.organization.ownerId,
+      type: 'MESSAGE_RECEIVED',
+      title: isAgency ? 'Nouveau message d’une agence' : 'Nouveau message d’un modèle',
+      body: isAgency
+        ? `${conversation.organization.name} vous a envoyé un message.`
+        : `${conversation.profile.displayName} vous a envoyé un message.`,
+      link: `/dashboard/messages/${conversationId}`,
     });
     return message;
   }
@@ -261,7 +281,13 @@ export class MessagingService {
         id: conversationId,
         ...(isAgency ? { organization: { ownerId: userId } } : { profile: { userId } }),
       },
-      select: { id: true, profileId: true, organizationId: true },
+      select: {
+        id: true,
+        profileId: true,
+        organizationId: true,
+        profile: { select: { userId: true, displayName: true } },
+        organization: { select: { ownerId: true, name: true } },
+      },
     });
     if (!conversation) {
       throw new NotFoundException('Conversation introuvable.');

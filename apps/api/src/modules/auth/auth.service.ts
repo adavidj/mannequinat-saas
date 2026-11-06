@@ -3,11 +3,15 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { TokenService } from './services/token.service';
 import { AuditService } from '../../audit/audit.service';
+import { AppConfigService } from '../../config/app-config.service';
+import { MailService } from '../../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import * as argon2 from 'argon2';
 import { UserRole } from '@prisma/client';
 import { calculateAge } from '../../common/utils/age';
@@ -27,10 +31,15 @@ function isAgeAtLeast18(birthDate: string): boolean {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly users: UsersService,
     private readonly tokens: TokenService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: AppConfigService,
   ) {}
 
   async register(input: {
@@ -75,6 +84,32 @@ export class AuthService {
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
     });
+
+    const verificationUrl = `${this.config.appPublicUrl}/verifier-email?token=${encodeURIComponent(verificationToken)}`;
+    await this.mail
+      .send({
+        to: user.email,
+        subject: 'Confirmez votre adresse e-mail — ModelBénin',
+        text: [
+          'Bienvenue sur ModelBénin.',
+          'Confirmez votre adresse e-mail pour activer toutes les fonctionnalités de votre compte :',
+          verificationUrl,
+          'Ce lien expire dans ' + this.config.emailVerificationTtlMinutes + ' minutes.',
+        ].join('\n\n'),
+        html: `<div style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.6">
+  <h1 style="font-size:20px">Bienvenue sur ModelBénin</h1>
+  <p>Confirmez votre adresse e-mail pour activer toutes les fonctionnalités de votre compte.</p>
+  <p><a href="${verificationUrl}" style="display:inline-block;background:#8a5a2b;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Confirmer mon adresse</a></p>
+  <p style="font-size:12px;color:#64748b">Ce lien expire dans ${this.config.emailVerificationTtlMinutes} minutes.</p>
+</div>`,
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `E-mail de vérification non envoyé pour ${user.id} : ${
+            error instanceof Error ? error.message : 'erreur inconnue'
+          }`,
+        );
+      });
 
     return {
       user: {
@@ -151,6 +186,17 @@ export class AuthService {
       entityId: user.id,
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
+    });
+
+    await this.notifications.notify({
+      userId: user.id,
+      type: 'WELCOME',
+      title: 'Bienvenue sur ModelBénin',
+      body:
+        user.role === UserRole.MODELE
+          ? 'Votre adresse e-mail est confirmée. Complétez votre profil et ajoutez vos trois photos guidées pour débloquer la visibilité.'
+          : 'Votre adresse e-mail est confirmée. Complétez votre organisation pour demander la vérification.',
+      link: user.role === UserRole.MODELE ? '/dashboard/profil' : '/dashboard/organisation',
     });
 
     return { message: 'Adresse e-mail vérifiée avec succès.' };

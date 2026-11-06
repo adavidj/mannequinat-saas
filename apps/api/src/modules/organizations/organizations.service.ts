@@ -4,6 +4,7 @@ import { Organization, OrganizationType, UserRole, VerificationStatus } from '@p
 import { AuditService } from '../../audit/audit.service';
 import { FieldEncryptionService } from '../../common/crypto/field-encryption.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateOrganizationDto, ReviewOrganizationDto } from './dto/organization.dto';
 
 type AuditContext = {
@@ -32,6 +33,7 @@ export class OrganizationsService {
     private readonly prisma: PrismaService,
     private readonly encryption: FieldEncryptionService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createOwnedOrganization(
@@ -164,6 +166,17 @@ export class OrganizationsService {
       entityId: organization.id,
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
+    });
+
+    const verified = input.verificationStatus === VerificationStatus.VERIFIED;
+    await this.notifications.notify({
+      userId: organization.ownerId,
+      type: verified ? 'ORGANIZATION_APPROVED' : 'ORGANIZATION_REJECTED',
+      title: verified ? 'Organisation vérifiée' : 'Organisation refusée',
+      body: verified
+        ? `Votre organisation « ${organization.name} » est vérifiée. Vous pouvez désormais accéder à la découverte et à la messagerie.`
+        : `La vérification de votre organisation « ${organization.name} » a été refusée. Vérifiez les justificatifs IFU/RCCM puis soumettez-les à nouveau.`,
+      link: '/dashboard/organisation',
     });
     return { id: organization.id, verificationStatus: organization.verificationStatus };
   }

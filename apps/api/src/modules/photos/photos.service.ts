@@ -8,6 +8,7 @@ import { AppConfigService } from '../../config/app-config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ObjectStorageService } from '../../storage/object-storage.service';
 import { hasApprovedGuidedPortfolio } from '../profiles/portfolio-requirements';
+import { NotificationsService } from '../notifications/notifications.service';
 import { ModeratePhotoDto } from './dto/moderate-photo.dto';
 import { UploadPhotoDto } from './dto/photo.dto';
 
@@ -54,6 +55,7 @@ export class PhotosService {
     private readonly storage: ObjectStorageService,
     private readonly config: AppConfigService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async uploadOwnedPhoto(
@@ -235,7 +237,10 @@ export class PhotosService {
     input: ModeratePhotoDto,
     context: AuditContext,
   ): Promise<OwnedPhoto> {
-    const existing = await this.prisma.photo.findUnique({ where: { id: photoId } });
+    const existing = await this.prisma.photo.findUnique({
+      where: { id: photoId },
+      include: { profile: { select: { userId: true } } },
+    });
     if (!existing) {
       throw new NotFoundException('Photo introuvable.');
     }
@@ -257,6 +262,17 @@ export class PhotosService {
       metadata: { profileId: photo.profileId },
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
+    });
+
+    const approved = input.moderationStatus === ModerationStatus.APPROVED;
+    await this.notifications.notify({
+      userId: existing.profile.userId,
+      type: approved ? 'PHOTO_APPROVED' : 'PHOTO_REJECTED',
+      title: approved ? 'Photo validée' : 'Photo refusée',
+      body: approved
+        ? 'Une de vos photos a été validée. Elle est désormais visible selon la visibilité de votre profil.'
+        : 'Une de vos photos n’a pas été validée. Vérifiez les règles de publication puis remplacez-la.',
+      link: '/dashboard/photos',
     });
 
     return this.toOwnedPhoto(photo);

@@ -9,12 +9,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigModule } from '../../config/config.module';
 import { AppConfigService } from '../../config/app-config.service';
 import { AuditModule } from '../../audit/audit.module';
+import { MailModule } from '../../mail/mail.module';
 
 @Module({
   imports: [
     ConfigModule,
     UsersModule,
     AuditModule,
+    MailModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

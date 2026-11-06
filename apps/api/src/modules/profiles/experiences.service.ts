@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { AuditService } from '../../audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ObjectStorageService } from '../../storage/object-storage.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateExperienceDto,
   ReviewExperienceDto,
@@ -43,6 +44,7 @@ export class ExperiencesService {
     private readonly prisma: PrismaService,
     private readonly storage: ObjectStorageService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createOwnedExperience(
@@ -266,7 +268,10 @@ export class ExperiencesService {
     input: ReviewExperienceDto,
     context: AuditContext,
   ): Promise<OwnerExperience> {
-    const existing = await this.prisma.experience.findUnique({ where: { id: experienceId } });
+    const existing = await this.prisma.experience.findUnique({
+      where: { id: experienceId },
+      include: { profile: { select: { userId: true } } },
+    });
     if (!existing) {
       throw new NotFoundException('Expérience introuvable.');
     }
@@ -282,6 +287,15 @@ export class ExperiencesService {
       experience.id,
       context,
     );
+    await this.notifications.notify({
+      userId: existing.profile.userId,
+      type: input.verified ? 'EXPERIENCE_APPROVED' : 'EXPERIENCE_REJECTED',
+      title: input.verified ? 'Expérience validée' : 'Expérience refusée',
+      body: input.verified
+        ? `Votre expérience « ${experience.title} » a été vérifiée. Elle compte désormais dans votre profil.`
+        : `Votre expérience « ${experience.title} » n’a pas pu être vérifiée. Vérifiez le justificatif et les informations saisies.`,
+      link: '/dashboard/experiences',
+    });
     return this.toOwnerExperience(experience);
   }
 

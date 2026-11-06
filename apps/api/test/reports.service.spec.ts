@@ -14,7 +14,9 @@ function createService() {
       }),
       findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(0),
-      findUnique: vi.fn().mockResolvedValue({ id: 'report-1', status: ReportStatus.OPEN }),
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({ id: 'report-1', status: ReportStatus.OPEN, reporterId: 'user-1' }),
       update: vi.fn().mockResolvedValue({
         id: 'report-1',
         status: ReportStatus.RESOLVED,
@@ -30,7 +32,13 @@ function createService() {
     $transaction: vi.fn(async (operations: Promise<unknown>[]) => Promise.all(operations)),
   };
   const audit = { log: vi.fn().mockResolvedValue(undefined) };
-  return { service: new ReportsService(prisma as never, audit as never), prisma, audit };
+  const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
+  return {
+    service: new ReportsService(prisma as never, audit as never, notifications as never),
+    prisma,
+    audit,
+    notifications,
+  };
 }
 
 describe('ReportsService', () => {

@@ -16,6 +16,7 @@ function buildExperience(overrides: Record<string, unknown> = {}) {
     verified: false,
     createdAt: new Date('2026-10-24T00:00:00.000Z'),
     updatedAt: new Date('2026-10-24T00:00:00.000Z'),
+    profile: { userId: 'user-1' },
     ...overrides,
   };
 }
@@ -42,6 +43,7 @@ function createService() {
     $transaction: vi.fn(async (operations: Promise<unknown>[]) => Promise.all(operations)),
   };
   const audit = { log: vi.fn().mockResolvedValue(undefined) };
+  const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
   const storage = {
     putPrivateFile: vi.fn().mockResolvedValue(undefined),
     deleteObject: vi.fn().mockResolvedValue(undefined),
@@ -52,10 +54,16 @@ function createService() {
   };
 
   return {
-    service: new ExperiencesService(prisma as never, storage as never, audit as never),
+    service: new ExperiencesService(
+      prisma as never,
+      storage as never,
+      audit as never,
+      notifications as never,
+    ),
     prisma,
     storage,
     audit,
+    notifications,
   };
 }
 

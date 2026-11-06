@@ -38,11 +38,18 @@ function createService() {
   };
   const encryption = { encrypt: vi.fn(encrypted), decrypt: vi.fn(decrypted) };
   const audit = { log: vi.fn().mockResolvedValue(undefined) };
+  const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
   return {
-    service: new OrganizationsService(prisma as never, encryption as never, audit as never),
+    service: new OrganizationsService(
+      prisma as never,
+      encryption as never,
+      audit as never,
+      notifications as never,
+    ),
     prisma,
     encryption,
     audit,
+    notifications,
   };
 }
 

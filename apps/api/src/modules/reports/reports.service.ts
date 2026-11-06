@@ -8,6 +8,7 @@ import { ReportTargetType } from '@prisma/client';
 
 import { AuditService } from '../../audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateReportDto, ReportQueueQueryDto, UpdateReportDto } from './dto/report.dto';
 
 type AuditContext = {
@@ -20,6 +21,7 @@ export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createReport(reporterId: string, input: CreateReportDto, context: AuditContext) {
@@ -75,7 +77,7 @@ export class ReportsService {
   ) {
     const existing = await this.prisma.report.findUnique({
       where: { id: reportId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, reporterId: true },
     });
     if (!existing) {
       throw new NotFoundException('Signalement introuvable.');
@@ -96,6 +98,22 @@ export class ReportsService {
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
     });
+
+    if (
+      existing.status !== input.status &&
+      (input.status === 'RESOLVED' || input.status === 'DISMISSED')
+    ) {
+      await this.notifications.notify({
+        userId: existing.reporterId,
+        type: 'REPORT_UPDATED',
+        title: 'Signalement traité',
+        body:
+          input.status === 'RESOLVED'
+            ? 'Votre signalement a été examiné et traité par notre équipe. Merci de contribuer à la sécurité de la plateforme.'
+            : 'Votre signalement a été examiné. Après vérification, aucune action n’a été retenue.',
+        link: null,
+      });
+    }
 
     return report;
   }

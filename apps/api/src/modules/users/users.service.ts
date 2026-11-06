@@ -3,6 +3,7 @@ import { UserRole, UserStatus } from '@prisma/client';
 
 import { AuditService } from '../../audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { ListUsersDto, UpdateUserStatusDto } from './dto/admin-user.dto';
 
 type AuditContext = {
@@ -25,6 +26,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async findByEmail(email: string) {
@@ -113,6 +115,19 @@ export class UsersService {
       ipAddress: context.ipAddress,
       userAgent: context.userAgent,
     });
+
+    if (existing.status !== input.status) {
+      const suspended = input.status === UserStatus.SUSPENDED;
+      await this.notifications.notify({
+        userId: user.id,
+        type: suspended ? 'ACCOUNT_SUSPENDED' : 'ACCOUNT_REACTIVATED',
+        title: suspended ? 'Compte suspendu' : 'Compte réactivé',
+        body: suspended
+          ? 'Votre compte a été suspendu par notre équipe de modération. Contactez le support si vous pensez qu’il s’agit d’une erreur.'
+          : 'Votre compte a été réactivé. Vous pouvez à nouveau utiliser votre espace ModelBénin.',
+        link: suspended ? null : '/dashboard',
+      });
+    }
 
     return user;
   }

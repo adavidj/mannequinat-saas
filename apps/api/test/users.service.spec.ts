@@ -24,7 +24,13 @@ function createService() {
     $transaction: vi.fn(async (operations: Promise<unknown>[]) => Promise.all(operations)),
   };
   const audit = { log: vi.fn().mockResolvedValue(undefined) };
-  return { service: new UsersService(prisma as never, audit as never), prisma, audit };
+  const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
+  return {
+    service: new UsersService(prisma as never, audit as never, notifications as never),
+    prisma,
+    audit,
+    notifications,
+  };
 }
 
 describe('UsersService admin', () => {

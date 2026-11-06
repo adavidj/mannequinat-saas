@@ -166,3 +166,34 @@ export type AdminExperience = OwnedExperience & {
     user: { email: string };
   };
 };
+
+export type NotificationType =
+  | 'WELCOME'
+  | 'MESSAGE_RECEIVED'
+  | 'PHOTO_APPROVED'
+  | 'PHOTO_REJECTED'
+  | 'EXPERIENCE_APPROVED'
+  | 'EXPERIENCE_REJECTED'
+  | 'ORGANIZATION_APPROVED'
+  | 'ORGANIZATION_REJECTED'
+  | 'REPORT_UPDATED'
+  | 'ACCOUNT_SUSPENDED'
+  | 'ACCOUNT_REACTIVATED';
+
+export type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type NotificationList = {
+  items: NotificationItem[];
+  total: number;
+  unreadCount: number;
+  take: number;
+  skip: number;
+};

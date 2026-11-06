@@ -99,6 +99,20 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum NotificationType {
+  WELCOME
+  MESSAGE_RECEIVED
+  PHOTO_APPROVED
+  PHOTO_REJECTED
+  EXPERIENCE_APPROVED
+  EXPERIENCE_REJECTED
+  ORGANIZATION_APPROVED
+  ORGANIZATION_REJECTED
+  REPORT_UPDATED
+  ACCOUNT_SUSPENDED
+  ACCOUNT_REACTIVATED
+}
+
 model User {
   id              String      @id @default(cuid())
   email           String      @unique
@@ -118,6 +132,7 @@ model User {
   auditLogs             AuditLog[]            @relation("AuditActor")
   emailVerificationTokens EmailVerificationToken[]
   refreshTokens         RefreshToken[]
+  notifications         Notification[]
 
   @@index([role, status])
 }
@@ -294,6 +309,23 @@ model Report {
 
   @@index([targetType, targetId, status])
   @@index([reporterId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([userId, createdAt])
 }
 
 model AuditLog {

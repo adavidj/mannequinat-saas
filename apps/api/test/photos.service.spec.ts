@@ -20,6 +20,7 @@ function buildPhoto(overrides: Record<string, unknown> = {}) {
     visibilityConsentAt: new Date('2026-10-24T00:00:00.000Z'),
     createdAt: new Date('2026-10-24T00:00:00.000Z'),
     updatedAt: new Date('2026-10-24T00:00:00.000Z'),
+    profile: { userId: 'user-1' },
     ...overrides,
   };
 }
@@ -55,12 +56,20 @@ function createService() {
   };
   const config = { photoMaxBytes: 5 * 1024 * 1024 };
   const audit = { log: vi.fn().mockResolvedValue(undefined) };
+  const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
 
   return {
-    service: new PhotosService(prisma as never, storage as never, config as never, audit as never),
+    service: new PhotosService(
+      prisma as never,
+      storage as never,
+      config as never,
+      audit as never,
+      notifications as never,
+    ),
     prisma,
     storage,
     audit,
+    notifications,
   };
 }
 
