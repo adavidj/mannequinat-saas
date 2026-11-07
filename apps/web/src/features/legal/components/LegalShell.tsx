@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { SiteFooter } from '@/shared/components/SiteFooter';
+import { SiteHeader } from '@/shared/components/SiteHeader';
+
 export function LegalShell({
   title,
   updatedAt,
@@ -11,57 +14,53 @@ export function LegalShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight text-brand-800">
-            ModelBénin
-          </Link>
-          <Link href="/" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Retour à l’accueil
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen bg-ivory-100">
+      <SiteHeader variant="solid" />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
-          Document juridique
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
-        <p className="mt-2 text-sm text-slate-500">Dernière mise à jour : {updatedAt}</p>
-        <div className="mt-8 space-y-8 text-sm leading-6 text-slate-700">{children}</div>
+      <main className="pt-[76px]">
+        <div className="relative overflow-hidden border-b border-ink-900/10 bg-ivory-200/70">
+          <div className="container-editorial relative py-16 sm:py-20">
+            <p className="eyebrow">Document juridique</p>
+            <h1 className="mt-5 max-w-3xl font-display text-[clamp(2.6rem,5vw,4.4rem)] font-light leading-[1.02] tracking-sharpest text-ink-950">
+              {title}
+            </h1>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-400">
+              Dernière mise à jour : {updatedAt}
+            </p>
+          </div>
+        </div>
+
+        <div className="container-editorial py-14 sm:py-16">
+          <div className="max-w-3xl space-y-10 text-sm leading-7 text-ink-700">{children}</div>
+
+          <div className="mt-16 flex flex-col gap-4 border-t border-ink-900/10 pt-8 text-[11px] uppercase tracking-widest text-ink-400 sm:flex-row sm:items-center sm:justify-between">
+            <p>ModelBénin — Cotonou, Bénin</p>
+            <nav className="flex flex-wrap gap-5">
+              <Link className="transition-colors hover:text-gold-700" href="/confidentialite">
+                Confidentialité
+              </Link>
+              <Link className="transition-colors hover:text-gold-700" href="/mentions-legales">
+                Mentions légales
+              </Link>
+              <Link className="transition-colors hover:text-gold-700" href="/inscription">
+                Créer un compte
+              </Link>
+            </nav>
+          </div>
+        </div>
       </main>
 
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <p>© {new Date().getFullYear()} ModelBénin — Cotonou, Bénin.</p>
-          <nav className="flex flex-wrap gap-4">
-            <Link
-              className="font-medium text-slate-600 hover:text-slate-900"
-              href="/confidentialite"
-            >
-              Confidentialité
-            </Link>
-            <Link
-              className="font-medium text-slate-600 hover:text-slate-900"
-              href="/mentions-legales"
-            >
-              Mentions légales
-            </Link>
-            <Link className="font-medium text-slate-600 hover:text-slate-900" href="/inscription">
-              Créer un compte
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
 
 export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section>
-      <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+    <section className="border-t border-ink-900/10 pt-6">
+      <h2 className="font-display text-2xl font-medium leading-snug tracking-tight text-ink-950">
+        {title}
+      </h2>
       <div className="mt-3 space-y-3">{children}</div>
     </section>
   );
@@ -69,7 +68,7 @@ export function LegalSection({ title, children }: { title: string; children: Rea
 
 export function LegalPlaceholder({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded bg-amber-50 px-1 font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
+    <span className="rounded bg-gold-100 px-1 font-medium text-gold-800 ring-1 ring-inset ring-gold-200">
       {children}
     </span>
   );

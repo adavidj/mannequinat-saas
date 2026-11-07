@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ModelBénin — Nouvelle direction artistique</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #0a0a09;
+    --ink-soft: #141412;
+    --ivory: #f4efe6;
+    --muted: #a39c8e;
+    --gold: #d9b978;
+    --line: rgba(244, 239, 230, 0.14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--ivory);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif; }
+  header { padding: 88px 6vw 40px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--gold);
+  }
+  .eyebrow::before { content: ""; width: 42px; height: 1px; background: var(--gold); }
+  h1 {
+    font-size: clamp(44px, 7vw, 96px);
+    line-height: 0.94; letter-spacing: -0.02em; font-weight: 300;
+    margin: 26px 0 20px; max-width: 16ch;
+  }
+  h1 em { color: var(--gold); font-style: italic; }
+  header p { margin: 6px 0; color: var(--muted); max-width: 68ch; line-height: 1.7; font-size: 15px; }
+  .note {
+    margin-top: 26px; padding: 14px 18px; border-left: 1px solid var(--gold);
+    background: rgba(217, 185, 120, 0.06); color: #d8cbb2; font-size: 13px; line-height: 1.6;
+  }
+  section { padding: 54px 6vw 10px; }
+  h2 {
+    font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 500;
+    color: var(--muted); margin: 0 0 24px; display: flex; align-items: center; gap: 16px;
+  }
+  h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+  figure {
+    margin: 0; background: var(--ink-soft); border: 1px solid var(--line);
+    overflow: hidden; transition: border-color 0.4s ease, transform 0.4s ease;
+  }
+  figure:hover { border-color: rgba(217, 185, 120, 0.5); transform: translateY(-3px); }
+  figure a { display: block; }
+  figure img { display: block; width: 100%; height: auto; }
+  figcaption { padding: 14px 16px 16px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  figcaption strong { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; }
+  figcaption span { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
+  .wide { grid-column: span 2; }
+  footer { padding: 56px 6vw 72px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); margin-top: 54px; }
+  footer em { color: var(--gold); font-style: normal; }
+  @media (max-width: 720px) { .wide { grid-column: span 1; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="eyebrow">ModelBénin — direction artistique</span>
+  <h1 class="serif">La maison du mannequinat, <em>révélée</em>.</h1>
+  <p>Refonte complète du front : noir d’encre, ivoire et or champagne, typographie éditoriale, sculpture 3D et animations au scroll.</p>
+  <p>Les captures proviennent de l’application Next.js en production, avec les données de démonstration.</p>
+  <p class="note">Docker n’étant pas démarré, l’API est remplacée par un serveur de démonstration : la mise en page, les composants et les parcours visibles sont authentiques, mais les données (profils, messages) sont fictives. La 3D est figée sur une image fixe pour la capture.</p>
+</header>
+
+<section>
+  <h2>Pages publiques</h2>
+  <div class="grid">
+    <figure class="wide"><a href="home-desktop.png" target="_blank"><img src="home-desktop.png" alt="Accueil desktop" loading="lazy" /></a>
+      <figcaption><strong>Accueil · desktop</strong><span>/</span></figcaption></figure>
+    <figure><a href="home-full.png" target="_blank"><img src="home-full.png" alt="Accueil page entière" loading="lazy" /></a>
+      <figcaption><strong>Accueil · page entière</strong><span>/</span></figcaption></figure>
+    <figure><a href="home-mobile.png" target="_blank"><img src="home-mobile.png" alt="Accueil mobile" loading="lazy" /></a>
+      <figcaption><strong>Accueil · mobile</strong><span>/</span></figcaption></figure>
+    <figure><a href="home-mobile-menu.png" target="_blank"><img src="home-mobile-menu.png" alt="Menu mobile" loading="lazy" /></a>
+      <figcaption><strong>Menu mobile</strong><span>/</span></figcaption></figure>
+    <figure><a href="connexion.png" target="_blank"><img src="connexion.png" alt="Connexion" loading="lazy" /></a>
+      <figcaption><strong>Connexion</strong><span>/connexion</span></figcaption></figure>
+    <figure><a href="inscription.png" target="_blank"><img src="inscription.png" alt="Inscription" loading="lazy" /></a>
+      <figcaption><strong>Inscription</strong><span>/inscription</span></figcaption></figure>
+    <figure><a href="mentions-legales.png" target="_blank"><img src="mentions-legales.png" alt="Mentions légales" loading="lazy" /></a>
+      <figcaption><strong>Mentions légales</strong><span>/mentions-legales</span></figcaption></figure>
+    <figure><a href="confidentialite.png" target="_blank"><img src="confidentialite.png" alt="Confidentialité" loading="lazy" /></a>
+      <figcaption><strong>Confidentialité</strong><span>/confidentialite</span></figcaption></figure>
+    <figure><a href="mot-de-passe-oublie.png" target="_blank"><img src="mot-de-passe-oublie.png" alt="Mot de passe oublié" loading="lazy" /></a>
+      <figcaption><strong>Mot de passe oublié</strong><span>/mot-de-passe-oublie</span></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>Espaces connectés</h2>
+  <div class="grid">
+    <figure><a href="dashboard-modele.png" target="_blank"><img src="dashboard-modele.png" alt="Tableau de bord modèle" loading="lazy" /></a>
+      <figcaption><strong>Tableau de bord modèle</strong><span>/dashboard</span></figcaption></figure>
+    <figure><a href="dashboard-modele-mobile.png" target="_blank"><img src="dashboard-modele-mobile.png" alt="Tableau de bord modèle mobile" loading="lazy" /></a>
+      <figcaption><strong>Tableau de bord · mobile</strong><span>/dashboard</span></figcaption></figure>
+    <figure><a href="dashboard-mobile-menu.png" target="_blank"><img src="dashboard-mobile-menu.png" alt="Tiroir de navigation" loading="lazy" /></a>
+      <figcaption><strong>Tiroir de navigation</strong><span>/dashboard</span></figcaption></figure>
+    <figure><a href="decouverte.png" target="_blank"><img src="decouverte.png" alt="Découverte agence" loading="lazy" /></a>
+      <figcaption><strong>Découverte · agence</strong><span>/dashboard/decouverte</span></figcaption></figure>
+    <figure><a href="admin.png" target="_blank"><img src="admin.png" alt="Back-office administration" loading="lazy" /></a>
+      <figcaption><strong>Back-office · photos</strong><span>/dashboard/admin/photos</span></figcaption></figure>
+    <figure><a href="modele-photos.png" target="_blank"><img src="modele-photos.png" alt="Galerie photos modèle" loading="lazy" /></a>
+      <figcaption><strong>Photos · modèle</strong><span>/dashboard/photos</span></figcaption></figure>
+    <figure><a href="modele-profil.png" target="_blank"><img src="modele-profil.png" alt="Profil modèle" loading="lazy" /></a>
+      <figcaption><strong>Profil · modèle</strong><span>/dashboard/profil</span></figcaption></figure>
+    <figure><a href="modele-notifications.png" target="_blank"><img src="modele-notifications.png" alt="Notifications modèle" loading="lazy" /></a>
+      <figcaption><strong>Notifications · modèle</strong><span>/dashboard/notifications</span></figcaption></figure>
+    <figure><a href="decouverte-mobile.png" target="_blank"><img src="decouverte-mobile.png" alt="Découverte agence mobile" loading="lazy" /></a>
+      <figcaption><strong>Découverte · mobile</strong><span>/dashboard/decouverte</span></figcaption></figure>
+  </div>
+</section>
+
+<footer>Captures générées le <em>7 novembre 2026</em> — 18 écrans.</footer>
+</body>
+</html>
