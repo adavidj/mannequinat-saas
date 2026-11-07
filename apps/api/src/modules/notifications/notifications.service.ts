@@ -170,7 +170,7 @@ export class NotificationsService {
 
   private renderEmail(title: string, body: string, absoluteLink: string | null): string {
     const linkBlock = absoluteLink
-      ? `<p style="margin-top:24px"><a href="${this.escape(absoluteLink)}" style="display:inline-block;background:#8a5a2b;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Ouvrir ModelBénin</a></p>`
+      ? `<p style="margin-top:24px"><a href="${this.escape(absoluteLink)}" style="display:inline-block;background:#166747;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Ouvrir ModelBénin</a></p>`
       : '';
     return `<div style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.6">
   <h1 style="font-size:20px">${this.escape(title)}</h1>

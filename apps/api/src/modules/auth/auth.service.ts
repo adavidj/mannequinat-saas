@@ -99,7 +99,7 @@ export class AuthService {
         html: `<div style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.6">
   <h1 style="font-size:20px">Bienvenue sur ModelBénin</h1>
   <p>Confirmez votre adresse e-mail pour activer toutes les fonctionnalités de votre compte.</p>
-  <p><a href="${verificationUrl}" style="display:inline-block;background:#8a5a2b;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Confirmer mon adresse</a></p>
+  <p><a href="${verificationUrl}" style="display:inline-block;background:#166747;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Confirmer mon adresse</a></p>
   <p style="font-size:12px;color:#64748b">Ce lien expire dans ${this.config.emailVerificationTtlMinutes} minutes.</p>
 </div>`,
       })
@@ -232,7 +232,7 @@ export class AuthService {
         html: `<div style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.6">
   <h1 style="font-size:20px">Réinitialisation du mot de passe</h1>
   <p>Vous avez demandé à réinitialiser votre mot de passe ModelBénin.</p>
-  <p><a href="${resetUrl}" style="display:inline-block;background:#8a5a2b;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Choisir un nouveau mot de passe</a></p>
+  <p><a href="${resetUrl}" style="display:inline-block;background:#166747;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Choisir un nouveau mot de passe</a></p>
   <p style="font-size:12px;color:#64748b">Ce lien expire dans ${this.config.passwordResetTtlMinutes} minutes et ne peut être utilisé qu’une seule fois. Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail.</p>
 </div>`,
       })
