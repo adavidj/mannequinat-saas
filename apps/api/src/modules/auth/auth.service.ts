@@ -202,6 +202,119 @@ export class AuthService {
     return { message: 'Adresse e-mail vérifiée avec succès.' };
   }
 
+  async forgotPassword(input: {
+    email: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }) {
+    const user = await this.users.findByEmail(input.email.toLowerCase());
+    const genericMessage =
+      'Si un compte existe avec cette adresse, un e-mail de réinitialisation vient d’être envoyé.';
+
+    if (!user || user.status !== 'ACTIVE') {
+      return { message: genericMessage };
+    }
+
+    const resetToken = await this.tokens.issuePasswordReset(user.id);
+    const resetUrl = `${this.config.appPublicUrl}/reinitialiser-mot-de-passe?token=${encodeURIComponent(resetToken)}`;
+
+    await this.mail
+      .send({
+        to: user.email,
+        subject: 'Réinitialisation de votre mot de passe — ModelBénin',
+        text: [
+          'Vous avez demandé à réinitialiser votre mot de passe ModelBénin.',
+          'Choisissez un nouveau mot de passe avec le lien ci-dessous :',
+          resetUrl,
+          `Ce lien expire dans ${this.config.passwordResetTtlMinutes} minutes et ne peut être utilisé qu’une seule fois.`,
+          'Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé.',
+        ].join('\n\n'),
+        html: `<div style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.6">
+  <h1 style="font-size:20px">Réinitialisation du mot de passe</h1>
+  <p>Vous avez demandé à réinitialiser votre mot de passe ModelBénin.</p>
+  <p><a href="${resetUrl}" style="display:inline-block;background:#8a5a2b;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none">Choisir un nouveau mot de passe</a></p>
+  <p style="font-size:12px;color:#64748b">Ce lien expire dans ${this.config.passwordResetTtlMinutes} minutes et ne peut être utilisé qu’une seule fois. Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail.</p>
+</div>`,
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `E-mail de réinitialisation non envoyé pour ${user.id} : ${
+            error instanceof Error ? error.message : 'erreur inconnue'
+          }`,
+        );
+      });
+
+    await this.audit.log({
+      actorId: user.id,
+      action: 'auth.password_reset_requested',
+      entityType: 'user',
+      entityId: user.id,
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
+    });
+
+    return { message: genericMessage };
+  }
+
+  async resetPassword(input: {
+    token: string;
+    password: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }) {
+    const result = await this.tokens.consumePasswordResetToken(input.token);
+    if (!result) {
+      throw new BadRequestException(
+        'Lien de réinitialisation invalide, expiré ou déjà utilisé. Demandez un nouveau lien.',
+      );
+    }
+
+    const user = await this.users.findById(result.userId);
+    if (!user || user.status !== 'ACTIVE') {
+      throw new BadRequestException('Ce compte ne peut plus être réinitialisé.');
+    }
+
+    const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
+    await this.users.updatePassword(user.id, passwordHash);
+    await this.tokens.revokeAllForUser(user.id);
+
+    await this.audit.log({
+      actorId: user.id,
+      action: 'auth.password_reset',
+      entityType: 'user',
+      entityId: user.id,
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
+    });
+
+    await this.mail
+      .send({
+        to: user.email,
+        subject: 'Votre mot de passe a été modifié — ModelBénin',
+        text: [
+          'Votre mot de passe ModelBénin vient d’être modifié.',
+          'Toutes vos sessions actives ont été déconnectées par sécurité.',
+          'Si vous n’êtes pas à l’origine de ce changement, contactez immédiatement notre équipe.',
+        ].join('\n\n'),
+        html: `<div style="font-family:system-ui,sans-serif;color:#0f172a;line-height:1.6">
+  <h1 style="font-size:20px">Mot de passe modifié</h1>
+  <p>Votre mot de passe ModelBénin vient d’être modifié et toutes vos sessions actives ont été déconnectées.</p>
+  <p>Si vous n’êtes pas à l’origine de ce changement, contactez immédiatement notre équipe.</p>
+</div>`,
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `E-mail de confirmation de réinitialisation non envoyé pour ${user.id} : ${
+            error instanceof Error ? error.message : 'erreur inconnue'
+          }`,
+        );
+      });
+
+    return {
+      message: 'Mot de passe réinitialisé. Vous pouvez maintenant vous connecter.',
+    };
+  }
+
   async refresh(input: {
     refreshToken: string;
     ipAddress?: string | null;

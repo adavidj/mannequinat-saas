@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -72,9 +73,17 @@ export function LoginForm({ nextPath }: LoginFormProps) {
       </div>
 
       <div>
-        <label className={labelClass} htmlFor="password">
-          Mot de passe
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label className={labelClass} htmlFor="password">
+            Mot de passe
+          </label>
+          <Link
+            className="text-xs font-semibold text-brand-800 hover:text-brand-900"
+            href="/mot-de-passe-oublie"
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
         <input
           id="password"
           type="password"

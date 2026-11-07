@@ -49,6 +49,37 @@ export class TokenService {
     return { userId: record.userId };
   }
 
+  async issuePasswordReset(userId: string): Promise<string> {
+    const token = randomToken();
+    const tokenHash = sha256(token);
+    const expiresAt = new Date(Date.now() + this.config.passwordResetTtlMinutes * 60_000);
+
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    await this.prisma.passwordResetToken.create({
+      data: { userId, tokenHash, expiresAt },
+    });
+
+    return token;
+  }
+
+  async consumePasswordResetToken(token: string): Promise<{ userId: string } | null> {
+    const tokenHash = sha256(token);
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+    });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      return null;
+    }
+    await this.prisma.passwordResetToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+    return { userId: record.userId };
+  }
+
   async issueRefreshToken(userId: string): Promise<string> {
     const token = randomToken();
     const tokenHash = sha256(token);

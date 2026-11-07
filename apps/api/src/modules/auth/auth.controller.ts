@@ -1,6 +1,13 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { loginSchema, refreshSchema, registerSchema, verifyEmailSchema } from './dto/auth.dto';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  refreshSchema,
+  registerSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+} from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Request } from 'express';
@@ -55,6 +62,33 @@ export class AuthController {
   ) {
     return this.auth.verifyEmail({
       token: body.token,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    });
+  }
+
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) body: { email: string },
+    @Req() req: Request,
+  ) {
+    return this.auth.forgotPassword({
+      email: body.email,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    });
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema)) body: { token: string; password: string },
+    @Req() req: Request,
+  ) {
+    return this.auth.resetPassword({
+      token: body.token,
+      password: body.password,
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     });

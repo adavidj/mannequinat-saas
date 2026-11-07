@@ -45,6 +45,26 @@ export const verifyEmailSchema = z.object({
 
 export type VerifyEmailDto = z.infer<typeof verifyEmailSchema>;
 
+const passwordSchema = z
+  .string()
+  .min(10, 'Le mot de passe doit contenir au moins 10 caractères')
+  .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
+  .regex(/[a-z]/, 'Le mot de passe doit contenir au moins une minuscule')
+  .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre');
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: passwordSchema,
+});
+
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
+
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });

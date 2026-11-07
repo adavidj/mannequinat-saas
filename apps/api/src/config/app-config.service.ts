@@ -30,6 +30,10 @@ export class AppConfigService {
     return Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? 60);
   }
 
+  get passwordResetTtlMinutes(): number {
+    return Number(process.env.PASSWORD_RESET_TTL_MINUTES ?? 30);
+  }
+
   get dataEncryptionKey(): string {
     const key = process.env.DATA_ENCRYPTION_KEY;
     if (!key) {

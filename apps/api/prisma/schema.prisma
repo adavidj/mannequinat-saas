@@ -131,6 +131,7 @@ model User {
   submittedReports      Report[]              @relation("ReportReporter")
   auditLogs             AuditLog[]            @relation("AuditActor")
   emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens   PasswordResetToken[]
   refreshTokens         RefreshToken[]
   notifications         Notification[]
 
@@ -353,6 +354,19 @@ model EmailVerificationToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
