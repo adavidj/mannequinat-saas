@@ -350,6 +350,9 @@ async function AdminOverview() {
           <Link className={secondaryButtonClass} href="/dashboard/admin/signalements">
             Signalements ({reports?.total ?? 0})
           </Link>
+          <Link className={secondaryButtonClass} href="/dashboard/admin/utilisateurs">
+            Utilisateurs
+          </Link>
         </div>
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
           <li>Les photos en attente restent invisibles aux agences jusqu’à approbation.</li>

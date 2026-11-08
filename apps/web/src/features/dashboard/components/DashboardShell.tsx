@@ -41,6 +41,8 @@ const ICONS: Record<string, IconComponent> = {
   '/dashboard/compte': SettingsIcon,
   '/dashboard/organisation': BuildingIcon,
   '/dashboard/decouverte': CompassIcon,
+  '/dashboard/admin': ShieldIcon,
+  '/dashboard/admin/utilisateurs': UserIcon,
   '/dashboard/admin/photos': CameraIcon,
   '/dashboard/admin/experiences': SparkIcon,
   '/dashboard/admin/organisations': ShieldIcon,
@@ -89,6 +91,8 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
 
   return [
     ...common,
+    { href: '/dashboard/admin', label: 'Back-office' },
+    { href: '/dashboard/admin/utilisateurs', label: 'Utilisateurs' },
     { href: '/dashboard/admin/photos', label: 'Modération photos' },
     { href: '/dashboard/admin/experiences', label: 'Expériences' },
     { href: '/dashboard/admin/organisations', label: 'Vérifications' },
@@ -99,7 +103,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
 }
 
 function isActivePath(pathname: string, href: string): boolean {
-  if (href === '/dashboard') {
+  if (href === '/dashboard' || href === '/dashboard/admin') {
     return pathname === href;
   }
   return pathname === href || pathname.startsWith(`${href}/`);

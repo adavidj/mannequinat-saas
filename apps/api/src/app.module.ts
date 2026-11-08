@@ -17,6 +17,7 @@ import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     MessagingModule,
     ReportsModule,
     NotificationsModule,
+    AdminModule,
   ],
   providers: [
     {

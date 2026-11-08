@@ -55,6 +55,75 @@ export type AdminReport = {
   reporter: { id: string; email: string; role: UserRole };
 };
 
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  emailVerifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminStats = {
+  generatedAt: string;
+  users: {
+    total: number;
+    active: number;
+    suspended: number;
+    deleted: number;
+    verified: number;
+    unverified: number;
+    newLast7Days: number;
+    newLast30Days: number;
+    byRole: Record<UserRole, number>;
+  };
+  profiles: {
+    total: number;
+    byLevel: Record<ProfileLevel, number>;
+    byVisibility: Record<ProfileVisibility, number>;
+  };
+  photos: {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
+  experiences: {
+    total: number;
+    pending: number;
+    verified: number;
+  };
+  organizations: {
+    total: number;
+    pending: number;
+    verified: number;
+    rejected: number;
+  };
+  reports: {
+    total: number;
+    open: number;
+    inReview: number;
+    resolved: number;
+    dismissed: number;
+  };
+  messaging: {
+    conversations: number;
+    messages: number;
+    messagesLast7Days: number;
+  };
+  activity: Array<{
+    id: string;
+    action: string;
+    entityType: string;
+    entityId: string;
+    createdAt: string;
+    actor: { id: string; email: string; role: UserRole } | null;
+  }>;
+};
+
 export type DiscoveryPhoto = {
   id: string;
   kind: PhotoKind;

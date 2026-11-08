@@ -7,6 +7,7 @@ import type {
   ReportStatus,
   ReportTargetType,
   UserRole,
+  UserStatus,
   VerificationStatus,
 } from '../types/api';
 
@@ -15,6 +16,18 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   AGENCE: 'Agence',
   FORMATEUR: 'Organisme de formation',
   ADMIN: 'Administrateur',
+};
+
+export const USER_STATUS_LABELS: Record<UserStatus, string> = {
+  ACTIVE: 'Actif',
+  SUSPENDED: 'Suspendu',
+  DELETED: 'Supprimé',
+};
+
+export const USER_STATUS_STYLES: Record<UserStatus, string> = {
+  ACTIVE: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  SUSPENDED: 'bg-red-50 text-red-800 ring-red-200',
+  DELETED: 'bg-slate-100 text-slate-700 ring-slate-200',
 };
 
 export const PROFILE_LEVEL_LABELS: Record<ProfileLevel, string> = {
