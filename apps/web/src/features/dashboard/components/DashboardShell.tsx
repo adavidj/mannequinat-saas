@@ -11,6 +11,7 @@ import {
   CameraIcon,
   CloseIcon,
   CompassIcon,
+  CreditCardIcon,
   FlagIcon,
   HomeIcon,
   LogoutIcon,
@@ -47,6 +48,7 @@ const ICONS: Record<string, IconComponent> = {
   '/dashboard/admin/experiences': SparkIcon,
   '/dashboard/admin/organisations': ShieldIcon,
   '/dashboard/admin/signalements': FlagIcon,
+  '/dashboard/abonnement': CreditCardIcon,
 };
 
 function navItemsForRole(role: SessionUser['role']): NavItem[] {
@@ -64,6 +66,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       { href: '/dashboard/photos', label: 'Mes photos' },
       { href: '/dashboard/experiences', label: 'Mes expériences' },
       { href: '/dashboard/messages', label: 'Messagerie' },
+      { href: '/dashboard/abonnement', label: 'Abonnement' },
       notifications,
       account,
     ];
@@ -75,6 +78,7 @@ function navItemsForRole(role: SessionUser['role']): NavItem[] {
       { href: '/dashboard/organisation', label: 'Mon organisation' },
       { href: '/dashboard/decouverte', label: 'Découverte' },
       { href: '/dashboard/messages', label: 'Messagerie' },
+      { href: '/dashboard/abonnement', label: 'Abonnement' },
       notifications,
       account,
     ];
@@ -258,13 +262,13 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen bg-ivory-100">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[268px] border-r border-white/5 bg-ink-950 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[268px] border-r border-white/5 bg-ink-950 lg:block print:hidden">
         {sidebar}
       </aside>
 
       {/* Tiroir mobile */}
       <div
-        className={`fixed inset-0 z-[60] lg:hidden ${menuOpen ? '' : 'pointer-events-none'}`}
+        className={`fixed inset-0 z-[60] lg:hidden ${menuOpen ? '' : 'pointer-events-none'} print:hidden`}
         aria-hidden={!menuOpen}
       >
         <div
@@ -285,8 +289,8 @@ export function DashboardShell({
         </div>
       </div>
 
-      <div className="lg:pl-[268px]">
-        <header className="sticky top-0 z-30 border-b border-ink-900/[0.07] bg-ivory-100/85 backdrop-blur-xl">
+      <div className="lg:pl-[268px] print:pl-0">
+        <header className="sticky top-0 z-30 border-b border-ink-900/[0.07] bg-ivory-100/85 backdrop-blur-xl print:hidden">
           <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-9">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -335,7 +339,7 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] px-4 py-7 sm:px-6 lg:px-9 lg:py-10">
+        <main className="mx-auto w-full max-w-[1440px] px-4 py-7 sm:px-6 lg:px-9 lg:py-10 print:max-w-none print:p-0">
           <div className="animate-fade-up">{children}</div>
         </main>
       </div>

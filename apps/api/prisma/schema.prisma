@@ -70,7 +70,13 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
 enum PaymentProvider {
+  SIMULATED
   FEDAPAY
   KKIAPAY
 }
@@ -111,6 +117,8 @@ enum NotificationType {
   REPORT_UPDATED
   ACCOUNT_SUSPENDED
   ACCOUNT_REACTIVATED
+  SUBSCRIPTION_ACTIVATED
+  SUBSCRIPTION_CANCELED
 }
 
 model User {
@@ -268,6 +276,7 @@ model Subscription {
   id        String             @id @default(cuid())
   userId    String
   plan      SubscriptionPlan
+  interval  BillingInterval    @default(MONTHLY)
   status    SubscriptionStatus @default(PENDING)
   startsAt  DateTime?
   renewAt   DateTime?
@@ -275,7 +284,8 @@ model Subscription {
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  payments Payment[]
 
   @@index([userId, status])
 }
@@ -283,17 +293,25 @@ model Subscription {
 model Payment {
   id                String          @id @default(cuid())
   userId            String
+  subscriptionId    String?
   amountFcfa        Int
   provider          PaymentProvider
   providerReference String          @unique
   status            PaymentStatus   @default(PENDING)
   idempotencyKey    String          @unique
+  plan              SubscriptionPlan?
+  interval          BillingInterval?
+  description       String?
+  invoiceNumber     String?         @unique
+  paidAt            DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
+  @@index([subscriptionId])
 }
 
 model Report {

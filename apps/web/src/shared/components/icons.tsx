@@ -198,3 +198,22 @@ export function ChevronDownIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function CreditCardIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="M2.5 9.5h19" />
+      <path d="M6 15h3.5" />
+    </svg>
+  );
+}
+
+export function ReceiptIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M5 3.5h14v17l-2.3-1.6-2.4 1.6-2.3-1.6L9.7 20.5 7.3 18.9 5 20.5z" />
+      <path d="M8.5 8h7M8.5 11.5h7M8.5 15h4" />
+    </svg>
+  );
+}

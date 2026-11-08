@@ -131,9 +131,10 @@ const ORDER: PageLink[] = [
   { href: '/parcours', label: 'Le parcours', title: 'De la première photo au premier contrat.' },
   { href: '/talents', label: 'Les talents', title: 'Des visages, pas des algorithmes.' },
   { href: '/confiance', label: 'La confiance', title: 'Elle se vérifie.' },
+  { href: '/tarifs', label: 'Les tarifs', title: 'L’exigence a un prix. Jamais une promesse.' },
 ];
 
-/** Navigation éditoriale de fin de page, entre les quatre chapitres publics. */
+/** Navigation éditoriale de fin de page, entre les cinq chapitres publics. */
 export function PagePager({ current }: { current: string }) {
   const position = ORDER.findIndex((page) => page.href === current);
   const previous = position > 0 ? ORDER[position - 1] : null;

@@ -5,7 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   // Derrière un reverse proxy (Vercel, Nginx, Caddy), request.ip doit rester fiable
   // pour le rate limiting et le journal d'audit.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);

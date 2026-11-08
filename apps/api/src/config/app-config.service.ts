@@ -85,7 +85,38 @@ export class AppConfigService {
   }
 
   get appPublicUrl(): string {
-    return (process.env.APP_PUBLIC_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+    return (
+      process.env.APP_PUBLIC_URL ??
+      process.env.WEB_APP_URL ??
+      'http://localhost:3000'
+    ).replace(/\/+$/, '');
+  }
+
+  /** Paiement simulé : actif hors production, désactivable explicitement. */
+  get billingSimulationEnabled(): boolean {
+    if (process.env.BILLING_SIMULATION === 'false') {
+      return false;
+    }
+    return this.nodeEnv !== 'production';
+  }
+
+  get billingProvider(): 'SIMULATED' | 'FEDAPAY' {
+    const provider = (process.env.BILLING_PROVIDER ?? '').trim().toUpperCase();
+    return provider === 'FEDAPAY' ? 'FEDAPAY' : 'SIMULATED';
+  }
+
+  get fedapaySecretKey(): string | null {
+    const key = process.env.FEDAPAY_SECRET_KEY?.trim();
+    return key ? key : null;
+  }
+
+  get fedapayWebhookSecret(): string | null {
+    const secret = process.env.FEDAPAY_WEBHOOK_SECRET?.trim();
+    return secret ? secret : null;
+  }
+
+  get fedapayApiUrl(): string {
+    return (process.env.FEDAPAY_API_URL ?? 'https://api.fedapay.com/v1').replace(/\/+$/, '');
   }
 
   private requireValue(name: string): string {

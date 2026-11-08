@@ -9,6 +9,7 @@ const COLUMNS = [
       { href: '/inscription', label: 'Créer un profil' },
       { href: '/connexion', label: 'Se connecter' },
       { href: '/talents', label: 'Découvrir les talents' },
+      { href: '/tarifs', label: 'Tarifs & formules' },
     ],
   },
   {

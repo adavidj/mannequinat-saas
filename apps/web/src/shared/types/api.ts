@@ -57,6 +57,91 @@ export type AdminReport = {
 
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 
+export type SubscriptionPlan = 'MODEL_PREMIUM' | 'AGENCY_STARTER' | 'AGENCY_PRO';
+
+export type BillingInterval = 'MONTHLY' | 'YEARLY';
+
+export type SubscriptionStatus = 'PENDING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'EXPIRED';
+
+export type PaymentProvider = 'SIMULATED' | 'FEDAPAY' | 'KKIAPAY';
+
+export type PaymentStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CANCELED' | 'REFUNDED';
+
+export type BillingPlan = {
+  code: SubscriptionPlan;
+  name: string;
+  audience: 'MODELE' | 'AGENCE';
+  tagline: string;
+  description: string;
+  prices: Record<BillingInterval, number | null>;
+  features: string[];
+  highlight?: boolean;
+};
+
+export type SubscriptionView = {
+  id: string;
+  plan: SubscriptionPlan;
+  planName: string;
+  interval: BillingInterval;
+  intervalLabel: string;
+  status: SubscriptionStatus;
+  priceFcfa: number | null;
+  startsAt: string | null;
+  renewAt: string | null;
+  endsAt: string | null;
+  cancelAtPeriodEnd: boolean;
+};
+
+export type BillingPayment = {
+  id: string;
+  invoiceNumber: string | null;
+  amountFcfa: number;
+  provider: PaymentProvider;
+  status: PaymentStatus;
+  description: string | null;
+  plan: SubscriptionPlan | null;
+  interval: BillingInterval | null;
+  createdAt: string;
+  paidAt: string | null;
+};
+
+export type BillingOverview = {
+  generatedAt: string;
+  simulation: boolean;
+  provider: 'SIMULATED' | 'FEDAPAY';
+  plans: BillingPlan[];
+  subscription: SubscriptionView | null;
+  payments: BillingPayment[];
+  totalPayments: number;
+};
+
+export type BillingCheckoutResult = {
+  payment: BillingPayment;
+  checkout: {
+    mode: 'simulated' | 'redirect';
+    provider: PaymentProvider;
+    checkoutUrl: string | null;
+    reference: string;
+  };
+};
+
+export type Invoice = {
+  number: string;
+  issuedAt: string;
+  paidAt: string | null;
+  status: PaymentStatus;
+  amountFcfa: number;
+  currency: 'XOF';
+  description: string;
+  planName: string | null;
+  intervalLabel: string | null;
+  provider: PaymentProvider;
+  providerReference: string;
+  customer: { email: string };
+  seller: { name: string; address: string; contact: string };
+  period: { startsAt: string | null; renewAt: string | null } | null;
+};
+
 export type AdminUser = {
   id: string;
   email: string;

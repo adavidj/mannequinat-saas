@@ -11,6 +11,7 @@ const NAV = [
   { href: '/parcours', label: 'Parcours', number: '02' },
   { href: '/talents', label: 'Talents', number: '03' },
   { href: '/confiance', label: 'Confiance', number: '04' },
+  { href: '/tarifs', label: 'Tarifs', number: '05' },
 ];
 
 export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' }) {
@@ -90,7 +91,10 @@ export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'sol
               <span className="h-1.5 w-1.5 translate-y-[-2px] rounded-full bg-gold-400 transition-transform duration-500 group-hover:scale-150" />
             </Link>
 
-            <nav className="hidden items-center gap-9 lg:flex" aria-label="Navigation principale">
+            <nav
+              className="hidden items-center gap-6 xl:gap-8 lg:flex"
+              aria-label="Navigation principale"
+            >
               {NAV.map((item) => {
                 const active = pathname === item.href;
                 return (

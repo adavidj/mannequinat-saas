@@ -18,6 +18,7 @@ import { MessagingModule } from './modules/messaging/messaging.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AdminModule } from './modules/admin/admin.module';
     ReportsModule,
     NotificationsModule,
     AdminModule,
+    BillingModule,
   ],
   providers: [
     {
