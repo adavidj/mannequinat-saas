@@ -8,15 +8,15 @@ const COLUMNS = [
     links: [
       { href: '/inscription', label: 'Créer un profil' },
       { href: '/connexion', label: 'Se connecter' },
-      { href: '/#talents', label: 'Découvrir les talents' },
+      { href: '/talents', label: 'Découvrir les talents' },
     ],
   },
   {
     title: 'La maison',
     links: [
-      { href: '/#maison', label: 'Notre approche' },
-      { href: '/#parcours', label: 'Les deux niveaux' },
-      { href: '/#confiance', label: 'Confiance & sécurité' },
+      { href: '/maison', label: 'Notre approche' },
+      { href: '/parcours', label: 'Les deux niveaux' },
+      { href: '/confiance', label: 'Confiance & sécurité' },
     ],
   },
   {
@@ -24,7 +24,7 @@ const COLUMNS = [
     links: [
       { href: '/mentions-legales', label: 'Mentions légales' },
       { href: '/confidentialite', label: 'Confidentialité' },
-      { href: '/#confiance', label: 'Signaler un abus' },
+      { href: '/confiance#signaler', label: 'Signaler un abus' },
     ],
   },
 ];

@@ -201,7 +201,7 @@ export default function HomePage() {
                   </Link>
                 </Magnetic>
                 <Link
-                  href="/#maison"
+                  href="/maison"
                   className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-7 py-4 text-[11px] font-semibold uppercase tracking-widest text-ivory-100/80 transition-colors duration-300 hover:border-gold-300/70 hover:text-gold-200"
                 >
                   Découvrir la maison
@@ -362,6 +362,19 @@ export default function HomePage() {
                     </Reveal>
                   ))}
                 </div>
+
+                <Reveal delay={320}>
+                  <Link
+                    href="/maison"
+                    className="group mt-10 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-ink-800 transition-colors duration-300 hover:text-gold-700"
+                  >
+                    Lire le manifeste
+                    <span className="relative h-px w-12 overflow-hidden bg-ink-900/20">
+                      <span className="absolute inset-0 origin-left scale-x-0 bg-gold-500 transition-transform duration-500 ease-expo group-hover:scale-x-100" />
+                    </span>
+                    <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                </Reveal>
               </div>
             </div>
           </div>
@@ -436,6 +449,19 @@ export default function HomePage() {
                 </Reveal>
               ))}
             </div>
+
+            <Reveal delay={420}>
+              <Link
+                href="/parcours"
+                className="group mt-10 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-ivory-100/70 transition-colors duration-300 hover:text-gold-200"
+              >
+                Explorer les trois niveaux
+                <span className="relative h-px w-12 overflow-hidden bg-white/20">
+                  <span className="absolute inset-0 origin-left scale-x-0 bg-gold-400 transition-transform duration-500 ease-expo group-hover:scale-x-100" />
+                </span>
+                <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </Reveal>
           </div>
         </section>
 
@@ -494,10 +520,17 @@ export default function HomePage() {
             </Marquee>
           </div>
 
-          <div className="container-editorial mt-8">
+          <div className="container-editorial mt-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[10px] uppercase tracking-widest text-ink-400">
               Visuels d’illustration — les profils réels sont protégés et consentis.
             </p>
+            <Link
+              href="/talents"
+              className="group inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-ink-800 transition-colors duration-300 hover:text-gold-700"
+            >
+              Voir la sélection
+              <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
           </div>
         </section>
 
@@ -556,6 +589,19 @@ export default function HomePage() {
                 );
               })}
             </div>
+
+            <Reveal delay={520}>
+              <Link
+                href="/confiance"
+                className="group mt-10 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-ivory-100/70 transition-colors duration-300 hover:text-gold-200"
+              >
+                Lire la charte complète
+                <span className="relative h-px w-12 overflow-hidden bg-white/20">
+                  <span className="absolute inset-0 origin-left scale-x-0 bg-gold-400 transition-transform duration-500 ease-expo group-hover:scale-x-100" />
+                </span>
+                <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </Reveal>
           </div>
         </section>
 

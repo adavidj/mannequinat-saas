@@ -211,6 +211,14 @@
   }
 }
 
+@media (max-width: 767px) {
+  /* Le grain reste visible mais ne se redessine plus : économie de batterie
+     et de frames sur les téléphones d'entrée de gamme. */
+  .grain::before {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

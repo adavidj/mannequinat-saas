@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRightIcon, CloseIcon, MenuIcon } from './icons';
 
 const NAV = [
-  { href: '/#maison', label: 'La maison' },
-  { href: '/#parcours', label: 'Parcours' },
-  { href: '/#talents', label: 'Talents' },
-  { href: '/#confiance', label: 'Confiance' },
+  { href: '/maison', label: 'La maison', number: '01' },
+  { href: '/parcours', label: 'Parcours', number: '02' },
+  { href: '/talents', label: 'Talents', number: '03' },
+  { href: '/confiance', label: 'Confiance', number: '04' },
 ];
 
 export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'solid' }) {
@@ -51,7 +51,9 @@ export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'sol
   }, [open]);
 
   const overlay = variant === 'overlay';
-  const light = overlay && !scrolled;
+  // Sur les pages publiques, le fond du header est toujours sombre (hero noir
+  // en haut, voile d'encre au scroll) : le texte reste ivoire dans les deux cas.
+  const light = overlay;
 
   return (
     <>
@@ -64,20 +66,24 @@ export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'sol
 
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-expo ${
-          light
-            ? 'border-b border-transparent bg-transparent'
-            : overlay
-              ? 'border-b border-white/10 bg-ink-950/80 backdrop-blur-xl'
-              : 'border-b border-ink-900/10 bg-ivory-100/85 backdrop-blur-xl'
+          overlay
+            ? scrolled
+              ? 'border-b border-white/10 bg-ink-950/90 backdrop-blur-sm'
+              : 'border-b border-transparent bg-transparent'
+            : 'border-b border-ink-900/10 bg-ivory-100/85 backdrop-blur-xl'
         }`}
       >
         <div className="container-editorial">
-          <div className="flex h-[76px] items-center justify-between gap-6">
+          <div
+            className={`flex items-center justify-between gap-6 transition-[height] duration-500 ease-expo ${
+              scrolled ? 'h-[68px]' : 'h-[76px]'
+            }`}
+          >
             <Link href="/" className="group inline-flex items-baseline gap-1.5">
               <span
-                className={`font-display text-[27px] font-medium leading-none tracking-sharpest transition-colors duration-500 ${
+                className={`font-display font-medium leading-none tracking-sharpest transition-all duration-500 ${
                   light ? 'text-ivory-50' : 'text-ink-950'
-                }`}
+                } ${scrolled ? 'text-[25px]' : 'text-[27px]'}`}
               >
                 Model<span className="italic text-gold-500">Bénin</span>
               </span>
@@ -85,15 +91,22 @@ export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'sol
             </Link>
 
             <nav className="hidden items-center gap-9 lg:flex" aria-label="Navigation principale">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-link ${light ? 'text-ivory-100' : 'text-ink-800'}`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {NAV.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    data-active={active}
+                    aria-current={active ? 'page' : undefined}
+                    className={`nav-link ${
+                      light ? 'text-ivory-100' : 'text-ink-800'
+                    } ${active ? 'text-gold-300' : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="flex items-center gap-3">
@@ -166,26 +179,39 @@ export function SiteHeader({ variant = 'overlay' }: { variant?: 'overlay' | 'sol
           </div>
 
           <nav className="mt-10 flex flex-1 flex-col justify-center gap-1" aria-label="Menu mobile">
-            {NAV.map((item, index) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="group flex items-center justify-between border-b border-white/10 py-5 transition-colors duration-300"
-                style={{
-                  opacity: open ? 1 : 0,
-                  transform: open ? 'translateY(0)' : 'translateY(18px)',
-                  transition: `opacity 0.6s var(--ease-expo) ${100 + index * 70}ms, transform 0.6s var(--ease-expo) ${
-                    100 + index * 70
-                  }ms`,
-                }}
-              >
-                <span className="font-display text-4xl font-light tracking-tight text-ivory-50 transition-colors group-hover:text-gold-300 sm:text-5xl">
-                  {item.label}
-                </span>
-                <ArrowRightIcon className="h-5 w-5 -translate-x-2 text-gold-400 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
-              </Link>
-            ))}
+            {NAV.map((item, index) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? 'page' : undefined}
+                  className="group flex items-center justify-between border-b border-white/10 py-5 transition-colors duration-300"
+                  style={{
+                    opacity: open ? 1 : 0,
+                    transform: open ? 'translateY(0)' : 'translateY(18px)',
+                    transition: `opacity 0.6s var(--ease-expo) ${100 + index * 70}ms, transform 0.6s var(--ease-expo) ${
+                      100 + index * 70
+                    }ms`,
+                  }}
+                >
+                  <span className="flex items-baseline gap-4">
+                    <span className="font-mono text-[10px] tracking-widest text-gold-400/60">
+                      {item.number}
+                    </span>
+                    <span
+                      className={`font-display text-4xl font-light tracking-tight transition-colors group-hover:text-gold-300 sm:text-5xl ${
+                        active ? 'italic text-gold-300' : 'text-ivory-50'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </span>
+                  <ArrowRightIcon className="h-5 w-5 -translate-x-2 text-gold-400 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="mt-auto space-y-5 pb-10 pt-8">
