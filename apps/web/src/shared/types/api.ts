@@ -107,6 +107,7 @@ export type BillingPayment = {
 
 export type BillingOverview = {
   generatedAt: string;
+  mode: 'disabled' | 'simulation' | 'live';
   simulation: boolean;
   provider: 'SIMULATED' | 'FEDAPAY';
   plans: BillingPlan[];

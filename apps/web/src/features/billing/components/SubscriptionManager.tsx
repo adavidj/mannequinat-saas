@@ -90,6 +90,7 @@ export function SubscriptionManager({
 
   const plans = overview.plans;
   const subscription = overview.subscription;
+  const billingDisabled = overview.mode === 'disabled';
   const currentPlan = plans.find((plan) => plan.code === selectedPlan) ?? plans[0];
   const currentPrice = currentPlan?.prices[selectedInterval] ?? null;
   const yearlyAvailable = plans.some((plan) => plan.prices.YEARLY !== null);
@@ -209,8 +210,8 @@ export function SubscriptionManager({
             Mon abonnement
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-ink-600">
-            Gérez votre formule, réglez par Mobile Money et retrouvez chaque facture. Sans
-            engagement : la résiliation prend effet à la fin de la période déjà payée.
+            Gérez votre formule et retrouvez chaque facture. Sans engagement : la résiliation prend
+            effet à la fin de la période déjà payée.
           </p>
         </div>
         <button
@@ -222,6 +223,14 @@ export function SubscriptionManager({
           {busy === 'refresh' ? 'Actualisation…' : 'Actualiser'}
         </button>
       </header>
+
+      {billingDisabled ? (
+        <p className={alertInfoClass} role="status">
+          <strong>Paiements fermés.</strong> Aucun abonnement ne peut être souscrit pour le moment.
+          Les formules sont présentées à titre informatif ; le paiement sera ouvert après validation
+          des avantages inclus.
+        </p>
+      ) : null}
 
       {overview.simulation ? (
         <p className={alertInfoClass} role="status">
@@ -457,17 +466,19 @@ export function SubscriptionManager({
           <button
             type="button"
             onClick={() => void startCheckout()}
-            disabled={busy !== null || !currentPlan || currentPrice === null}
+            disabled={busy !== null || billingDisabled || !currentPlan || currentPrice === null}
             className={primaryButtonClass}
           >
             <CreditCardIcon className="h-4 w-4" />
-            {busy === 'checkout'
-              ? 'Préparation…'
-              : renewingSamePlan
-                ? 'Renouveler'
-                : subscription
-                  ? 'Changer de formule'
-                  : 'Souscrire'}
+            {billingDisabled
+              ? 'Paiements fermés'
+              : busy === 'checkout'
+                ? 'Préparation…'
+                : renewingSamePlan
+                  ? 'Renouveler'
+                  : subscription
+                    ? 'Changer de formule'
+                    : 'Souscrire'}
           </button>
         </div>
       </section>

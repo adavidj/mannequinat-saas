@@ -6,6 +6,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -17,7 +18,7 @@ import {
   UserRole,
 } from '@prisma/client';
 
-import { AppConfigService } from '../../config/app-config.service';
+import { AppConfigService, type BillingMode } from '../../config/app-config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { BillingPlan, findPlan, plansForAudience } from './billing.catalog';
@@ -78,6 +79,7 @@ export type InvoiceView = {
 
 export type BillingOverview = {
   generatedAt: string;
+  mode: BillingMode;
   simulation: boolean;
   provider: 'SIMULATED' | 'FEDAPAY';
   plans: BillingPlan[];
@@ -153,10 +155,12 @@ export class BillingService {
       this.prisma.payment.count({ where: { userId } }),
     ]);
 
+    const mode = this.config.billingMode;
     return {
       generatedAt: new Date().toISOString(),
-      simulation: this.gateway.simulationEnabled,
-      provider: this.config.billingProvider,
+      mode,
+      simulation: mode === 'simulation',
+      provider: mode === 'live' ? 'FEDAPAY' : 'SIMULATED',
       plans: audience ? plansForAudience(audience) : [],
       subscription: subscription ? this.toSubscriptionView(subscription) : null,
       payments: payments.map((payment) => this.toPaymentView(payment)),
@@ -165,6 +169,11 @@ export class BillingService {
   }
 
   async checkout(userId: string, dto: CreateCheckoutDto): Promise<CheckoutResult> {
+    if (this.config.billingMode === 'disabled') {
+      throw new ServiceUnavailableException(
+        'Les paiements sont temporairement désactivés. Réessayez plus tard.',
+      );
+    }
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, role: true, status: true },
@@ -233,7 +242,7 @@ export class BillingService {
         subscriptionId: subscription.id,
         amountFcfa: price,
         provider:
-          this.config.billingProvider === 'FEDAPAY'
+          this.config.billingMode === 'live'
             ? PaymentProvider.FEDAPAY
             : PaymentProvider.SIMULATED,
         providerReference: reference,
@@ -281,7 +290,7 @@ export class BillingService {
     userId: string,
     paymentId: string,
   ): Promise<{ status: PaymentStatus; activated: boolean }> {
-    if (!this.gateway.simulationEnabled) {
+    if (this.config.billingMode !== 'simulation') {
       throw new ForbiddenException('La confirmation simulée est désactivée.');
     }
     const payment = await this.prisma.payment.findFirst({

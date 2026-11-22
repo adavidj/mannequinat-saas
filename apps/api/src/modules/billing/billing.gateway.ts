@@ -39,27 +39,28 @@ export class BillingGateway {
   constructor(private readonly config: AppConfigService) {}
 
   get simulationEnabled(): boolean {
-    return this.config.billingSimulationEnabled && this.config.billingProvider === 'SIMULATED';
+    return this.config.billingMode === 'simulation';
   }
 
   async createCheckout(input: GatewayCheckoutInput): Promise<GatewayCheckout> {
-    if (this.config.billingProvider === 'FEDAPAY') {
-      return this.createFedapayCheckout(input);
-    }
-    if (!this.simulationEnabled) {
+    const mode = this.config.billingMode;
+    if (mode === 'disabled') {
       throw new ServiceUnavailableException(
-        'Aucun prestataire de paiement n’est configuré. Contactez l’équipe ModelBénin.',
+        'Les paiements sont temporairement désactivés. Réessayez plus tard.',
       );
     }
-    this.logger.warn(
-      `Paiement simulé pour ${input.reference} (${input.amountFcfa} FCFA). Configurez BILLING_PROVIDER=FEDAPAY pour encaisser réellement.`,
-    );
-    return {
-      mode: 'simulated',
-      provider: PaymentProvider.SIMULATED,
-      checkoutUrl: null,
-      reference: input.reference,
-    };
+    if (mode === 'simulation') {
+      this.logger.warn(
+        `Paiement simulé pour ${input.reference} (${input.amountFcfa} FCFA). Aucun montant réel n’est prélevé.`,
+      );
+      return {
+        mode: 'simulated',
+        provider: PaymentProvider.SIMULATED,
+        checkoutUrl: null,
+        reference: input.reference,
+      };
+    }
+    return this.createFedapayCheckout(input);
   }
 
   /** Vérifie la signature d'un webhook. En production, un secret est exigé. */

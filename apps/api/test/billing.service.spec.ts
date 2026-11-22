@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -84,7 +85,12 @@ function basePayment(overrides: Partial<PaymentState> = {}): PaymentState {
   };
 }
 
-function createService(options: { user?: Record<string, unknown> } = {}) {
+function createService(
+  options: {
+    user?: Record<string, unknown>;
+    billingMode?: 'disabled' | 'simulation' | 'live';
+  } = {},
+) {
   const user = {
     id: 'user-1',
     email: 'awa@example.bj',
@@ -154,7 +160,7 @@ function createService(options: { user?: Record<string, unknown> } = {}) {
   };
 
   const config = {
-    billingProvider: 'SIMULATED' as const,
+    billingMode: options.billingMode ?? ('simulation' as const),
     nodeEnv: 'test',
     appPublicUrl: 'https://modelbenin.test',
     fedapaySecretKey: null,
@@ -412,7 +418,9 @@ describe('BillingService', () => {
     const overview = await service.overview('user-1', { take: 50 });
 
     expect(overview.plans.map((plan) => plan.code)).toEqual([SubscriptionPlan.MODEL_PREMIUM]);
+    expect(overview.mode).toBe('simulation');
     expect(overview.simulation).toBe(true);
+    expect(overview.provider).toBe('SIMULATED');
     expect(prisma.subscription.updateMany).toHaveBeenCalledWith({
       where: {
         userId: 'user-1',
@@ -421,5 +429,30 @@ describe('BillingService', () => {
       },
       data: { status: SubscriptionStatus.EXPIRED },
     });
+  });
+
+  it('refuse tout paiement lorsque la facturation est désactivée', async () => {
+    const { service, prisma, gateway } = createService({ billingMode: 'disabled' });
+
+    const overview = await service.overview('user-1', { take: 50 });
+    expect(overview.mode).toBe('disabled');
+    expect(overview.simulation).toBe(false);
+
+    await expect(
+      service.checkout('user-1', {
+        plan: SubscriptionPlan.MODEL_PREMIUM,
+        interval: BillingInterval.MONTHLY,
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(prisma.payment.create).not.toHaveBeenCalled();
+    expect(gateway.createCheckout).not.toHaveBeenCalled();
+  });
+
+  it('n’expose jamais la confirmation simulée hors mode démonstration', async () => {
+    const { service } = createService({ billingMode: 'live' });
+
+    await expect(service.confirmSimulatedPayment('user-1', 'payment-1')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 });

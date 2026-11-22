@@ -1,11 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+
+export type BillingMode = 'disabled' | 'simulation' | 'live';
+
+/**
+ * Le lot 3 (entitlements) doit être livré avant d'autoriser un encaissement
+ * réel. Tant que ce drapeau est faux, `BILLING_MODE=live` fait échouer le
+ * démarrage : aucun paiement réel ne peut être activé par erreur.
+ */
+const ENTITLEMENTS_READY = false;
 
 @Injectable()
 export class PrismaServiceClient extends PrismaService {}
 
 @Injectable()
-export class AppConfigService {
+export class AppConfigService implements OnModuleInit {
+  onModuleInit(): void {
+    // Fail fast : une configuration de paiement invalide ne doit jamais
+    // démarrer un serveur capable d'encaisser.
+    void this.billingMode;
+  }
+
   get databaseUrl(): string {
     return process.env.DATABASE_URL ?? '';
   }
@@ -92,17 +107,41 @@ export class AppConfigService {
     ).replace(/\/+$/, '');
   }
 
-  /** Paiement simulé : actif hors production, désactivable explicitement. */
-  get billingSimulationEnabled(): boolean {
-    if (process.env.BILLING_SIMULATION === 'false') {
-      return false;
+  /**
+   * Mode de facturation :
+   * - `disabled` : aucun paiement, même simulé ;
+   * - `simulation` : paiement simulé, aucun encaissement réel ;
+   * - `live` : encaissement réel, interdit tant que les entitlements ne sont
+   *   pas livrés (lot 3).
+   */
+  get billingMode(): BillingMode {
+    const explicit = (process.env.BILLING_MODE ?? '').trim().toLowerCase();
+    if (explicit) {
+      if (explicit !== 'disabled' && explicit !== 'simulation' && explicit !== 'live') {
+        throw new Error('BILLING_MODE doit valoir disabled, simulation ou live.');
+      }
+      if (explicit === 'live' && !ENTITLEMENTS_READY) {
+        throw new Error(
+          'BILLING_MODE=live est interdit tant que le lot 3 (entitlements) n’est pas validé.',
+        );
+      }
+      return explicit;
     }
-    return this.nodeEnv !== 'production';
+
+    // Rétrocompatibilité : on ne déduit jamais `live` d'une ancienne variable.
+    if ((process.env.BILLING_PROVIDER ?? '').trim().toUpperCase() === 'FEDAPAY') {
+      throw new Error(
+        'BILLING_PROVIDER=FEDAPAY n’est plus supporté : définir BILLING_MODE (disabled, simulation ou live).',
+      );
+    }
+    if (process.env.BILLING_SIMULATION === 'false') {
+      return 'disabled';
+    }
+    return this.nodeEnv === 'production' ? 'disabled' : 'simulation';
   }
 
-  get billingProvider(): 'SIMULATED' | 'FEDAPAY' {
-    const provider = (process.env.BILLING_PROVIDER ?? '').trim().toUpperCase();
-    return provider === 'FEDAPAY' ? 'FEDAPAY' : 'SIMULATED';
+  get billingSimulationEnabled(): boolean {
+    return this.billingMode === 'simulation';
   }
 
   get fedapaySecretKey(): string | null {
