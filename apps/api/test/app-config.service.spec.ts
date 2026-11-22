@@ -7,7 +7,12 @@ const MANAGED_VARS = [
   'BILLING_PROVIDER',
   'BILLING_SIMULATION',
   'NODE_ENV',
+  'JWT_ACCESS_SECRET',
+  'JWT_REFRESH_SECRET',
+  'DATA_ENCRYPTION_KEY',
 ] as const;
+
+const VALID_DATA_KEY = Buffer.alloc(32, 7).toString('base64');
 
 const saved = new Map<string, string | undefined>();
 
@@ -77,5 +82,49 @@ describe('AppConfigService.billingMode', () => {
     const config = new AppConfigService();
     process.env.BILLING_MODE = 'live';
     expect(() => config.onModuleInit()).toThrow(/lot 3/);
+  });
+});
+
+describe('AppConfigService.validateEnvironment', () => {
+  function setValidSecrets() {
+    process.env.JWT_ACCESS_SECRET = 'a'.repeat(48);
+    process.env.JWT_REFRESH_SECRET = 'b'.repeat(48);
+    process.env.DATA_ENCRYPTION_KEY = VALID_DATA_KEY;
+  }
+
+  it('accepte des secrets forts et distincts', () => {
+    const config = new AppConfigService();
+    setValidSecrets();
+    expect(() => config.validateEnvironment()).not.toThrow();
+  });
+
+  it('refuse un secret absent, court ou resté à l’exemple', () => {
+    const config = new AppConfigService();
+
+    setValidSecrets();
+    delete process.env.JWT_ACCESS_SECRET;
+    expect(() => config.validateEnvironment()).toThrow(/JWT_ACCESS_SECRET est obligatoire/);
+
+    setValidSecrets();
+    process.env.JWT_REFRESH_SECRET = 'trop-court';
+    expect(() => config.validateEnvironment()).toThrow(/au moins 32 caractères/);
+
+    setValidSecrets();
+    process.env.JWT_ACCESS_SECRET = 'replace-with-a-long-random-access-secret';
+    expect(() => config.validateEnvironment()).toThrow(/valeur d’exemple/);
+  });
+
+  it('refuse deux secrets JWT identiques', () => {
+    const config = new AppConfigService();
+    setValidSecrets();
+    process.env.JWT_REFRESH_SECRET = process.env.JWT_ACCESS_SECRET;
+    expect(() => config.validateEnvironment()).toThrow(/doivent être différents/);
+  });
+
+  it('refuse une clé de chiffrement qui ne fait pas 32 octets', () => {
+    const config = new AppConfigService();
+    setValidSecrets();
+    process.env.DATA_ENCRYPTION_KEY = 'A'.repeat(40);
+    expect(() => config.validateEnvironment()).toThrow(/32 octets/);
   });
 });
