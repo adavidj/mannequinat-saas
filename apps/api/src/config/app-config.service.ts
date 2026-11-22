@@ -10,6 +10,34 @@ export type BillingMode = 'disabled' | 'simulation' | 'live';
  */
 const ENTITLEMENTS_READY = false;
 
+/** Longueur minimale exigée pour les secrets symétriques (256 bits en hex/base64). */
+const MIN_SECRET_LENGTH = 32;
+
+const SECRET_PLACEHOLDER_MARKERS = [
+  'replace-with',
+  'change-me',
+  'changeme',
+  'placeholder',
+  'dev-access',
+  'dev-refresh',
+  'example-secret',
+];
+
+function readSecret(name: string): string {
+  const value = (process.env[name] ?? '').trim();
+  if (!value) {
+    throw new Error(`${name} est obligatoire.`);
+  }
+  if (value.length < MIN_SECRET_LENGTH) {
+    throw new Error(`${name} doit contenir au moins ${MIN_SECRET_LENGTH} caractères.`);
+  }
+  const lower = value.toLowerCase();
+  if (SECRET_PLACEHOLDER_MARKERS.some((marker) => lower.includes(marker))) {
+    throw new Error(`${name} utilise encore une valeur d’exemple : générez un secret aléatoire.`);
+  }
+  return value;
+}
+
 @Injectable()
 export class PrismaServiceClient extends PrismaService {}
 
@@ -26,11 +54,11 @@ export class AppConfigService implements OnModuleInit {
   }
 
   get jwtAccessSecret(): string {
-    return process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret-change-me';
+    return readSecret('JWT_ACCESS_SECRET');
   }
 
   get jwtRefreshSecret(): string {
-    return process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-change-me';
+    return readSecret('JWT_REFRESH_SECRET');
   }
 
   get jwtAccessTtl(): string {
@@ -50,13 +78,41 @@ export class AppConfigService implements OnModuleInit {
   }
 
   get dataEncryptionKey(): string {
-    const key = process.env.DATA_ENCRYPTION_KEY;
-    if (!key) {
-      throw new Error(
-        'DATA_ENCRYPTION_KEY est obligatoire pour traiter les données de profil sensibles.',
-      );
+    const key = readSecret('DATA_ENCRYPTION_KEY');
+    const decoded = Buffer.from(key, 'base64');
+    if (decoded.length !== 32) {
+      throw new Error('DATA_ENCRYPTION_KEY doit être une clé Base64 de 32 octets.');
     }
     return key;
+  }
+
+  /**
+   * Valide les secrets critiques avant de créer l'application. Appelée depuis
+   * `main.ts` : si un secret manque, est trop court ou reste un exemple, le
+   * processus s'arrête avant d'ouvrir le moindre port.
+   */
+  validateEnvironment(): void {
+    const errors: string[] = [];
+
+    for (const check of [
+      () => this.jwtAccessSecret,
+      () => this.jwtRefreshSecret,
+      () => this.dataEncryptionKey,
+    ]) {
+      try {
+        check();
+      } catch (error: unknown) {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    if (errors.length === 0 && this.jwtAccessSecret === this.jwtRefreshSecret) {
+      errors.push('JWT_ACCESS_SECRET et JWT_REFRESH_SECRET doivent être différents.');
+    }
+
+    if (errors.length > 0) {
+      throw new Error(`Configuration invalide :\n- ${errors.join('\n- ')}`);
+    }
   }
 
   get s3Endpoint(): string {
