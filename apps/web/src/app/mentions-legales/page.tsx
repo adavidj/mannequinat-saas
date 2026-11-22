@@ -96,7 +96,11 @@ export default function LegalNoticePage() {
           >
             politique de confidentialité
           </Link>{' '}
-          pour le détail des données traitées et de vos droits.
+          pour le détail des données traitées et de vos droits, ainsi que les{' '}
+          <Link className="font-semibold text-brand-800 hover:text-brand-900" href="/cgu">
+            conditions générales d’utilisation
+          </Link>
+          .
         </p>
       </LegalSection>
 

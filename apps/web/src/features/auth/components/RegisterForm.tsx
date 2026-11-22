@@ -171,6 +171,18 @@ export function RegisterForm() {
         </div>
       ) : null}
 
+      <p className="text-xs leading-6 text-slate-500">
+        En créant un compte, vous acceptez les{' '}
+        <Link className="font-semibold text-brand-800 hover:text-brand-900" href="/cgu">
+          conditions générales d’utilisation
+        </Link>{' '}
+        et la{' '}
+        <Link className="font-semibold text-brand-800 hover:text-brand-900" href="/confidentialite">
+          politique de confidentialité
+        </Link>
+        .
+      </p>
+
       <button type="submit" className={`${primaryButtonClass} w-full`} disabled={isSubmitting}>
         {isSubmitting ? 'Création du compte…' : 'Créer mon compte'}
       </button>

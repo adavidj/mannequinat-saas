@@ -36,6 +36,9 @@ export function LegalShell({
           <div className="mt-16 flex flex-col gap-4 border-t border-ink-900/10 pt-8 text-[11px] uppercase tracking-widest text-ink-400 sm:flex-row sm:items-center sm:justify-between">
             <p>ModelBénin — Cotonou, Bénin</p>
             <nav className="flex flex-wrap gap-5">
+              <Link className="transition-colors hover:text-gold-700" href="/cgu">
+                CGU
+              </Link>
               <Link className="transition-colors hover:text-gold-700" href="/confidentialite">
                 Confidentialité
               </Link>

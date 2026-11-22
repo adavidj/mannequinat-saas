@@ -24,6 +24,7 @@ const COLUMNS = [
     title: 'Informations',
     links: [
       { href: '/mentions-legales', label: 'Mentions légales' },
+      { href: '/cgu', label: 'Conditions générales' },
       { href: '/confidentialite', label: 'Confidentialité' },
       { href: '/confiance#signaler', label: 'Signaler un abus' },
     ],
