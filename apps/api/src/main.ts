@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
+import { securityHeadersMiddleware } from './config/security-headers';
 
 async function bootstrap(): Promise<void> {
   // Échouer avant d'ouvrir un port : un secret absent, trop faible ou resté à
@@ -11,6 +12,7 @@ async function bootstrap(): Promise<void> {
   new AppConfigService().validateEnvironment();
 
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  app.use(securityHeadersMiddleware());
   // Derrière un reverse proxy (Vercel, Nginx, Caddy), request.ip doit rester fiable
   // pour le rate limiting et le journal d'audit.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
