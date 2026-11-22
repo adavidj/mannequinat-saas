@@ -5,8 +5,26 @@ import type { BillingInterval, BillingPlan } from '../types/api';
  * Les montants facturés sont recalculés côté API
  * (apps/api/src/modules/billing/billing.catalog.ts) : ce fichier ne sert qu'à
  * l'affichage public de la page Tarifs.
+ *
+ * Tant que les entitlements (lot 3) ne sont pas livrés, aucune formule n'est
+ * achetable : chaque avantage est marqué comme disponible (déjà livré) ou
+ * « bientôt » (promis mais absent). Ne jamais passer `available` à `true` pour
+ * une formule dont les contreparties ne sont pas réellement appliquées.
  */
-export const PLAN_CATALOG: BillingPlan[] = [
+
+export type PlanFeature = {
+  label: string;
+  /** `true` seulement si la fonctionnalité existe déjà dans le produit. */
+  available: boolean;
+};
+
+export type PlanDisplay = Omit<BillingPlan, 'features'> & {
+  features: PlanFeature[];
+  /** `false` : la formule est présentée mais ne peut pas être souscrite. */
+  available: boolean;
+};
+
+export const PLAN_CATALOG: PlanDisplay[] = [
   {
     code: 'MODEL_PREMIUM',
     name: 'Premium Modèle',
@@ -15,12 +33,15 @@ export const PLAN_CATALOG: BillingPlan[] = [
     description:
       'Un profil qui respire, des photos qui racontent, et des outils pour suivre l’intérêt réel des agences.',
     prices: { MONTHLY: 2000, YEARLY: 18000 },
+    available: false,
     features: [
-      '30 photos et une vidéo courte',
-      'Profil mis en avant dans la découverte',
-      'Candidatures aux castings illimitées',
-      'Statistiques de vues et de favoris',
-      'Badge Premium sur votre profil',
+      { label: 'Profil complet et trois photos guidées modérées', available: true },
+      { label: 'Messagerie tracée, blocable et signalable', available: true },
+      { label: '30 photos et une vidéo courte', available: false },
+      { label: 'Profil mis en avant dans la découverte', available: false },
+      { label: 'Candidatures aux castings illimitées', available: false },
+      { label: 'Statistiques de vues et de favoris', available: false },
+      { label: 'Badge Premium sur votre profil', available: false },
     ],
     highlight: true,
   },
@@ -32,12 +53,15 @@ export const PLAN_CATALOG: BillingPlan[] = [
     description:
       'Pour une agence qui construit son vivier : rechercher, comparer, conserver ses sélections.',
     prices: { MONTHLY: 15000, YEARLY: null },
+    available: false,
     features: [
-      'Filtres avancés et listes de sélection',
-      'Quota de contacts étendu',
-      'Favoris et notes d’équipe',
-      'Accès aux profils confirmés',
-      'Support par e-mail sous 48 h',
+      { label: 'Découverte réservée aux agences vérifiées', available: true },
+      { label: 'Messagerie encadrée, quota et blocage', available: true },
+      { label: 'Filtres avancés et listes de sélection', available: false },
+      { label: 'Quota de contacts étendu', available: false },
+      { label: 'Favoris et notes d’équipe', available: false },
+      { label: 'Accès aux profils confirmés', available: false },
+      { label: 'Support par e-mail sous 48 h', available: false },
     ],
   },
   {
@@ -48,12 +72,14 @@ export const PLAN_CATALOG: BillingPlan[] = [
     description:
       'Pour une structure qui recrute en continu et veut un accès fluide à l’ensemble du catalogue.',
     prices: { MONTHLY: 40000, YEARLY: null },
+    available: false,
     features: [
-      'Contacts illimités',
-      'Export des sélections',
-      'Profils mis en avant dans vos recherches',
-      'Publication de castings à l’unité incluse',
-      'Accompagnement dédié',
+      { label: 'Découverte réservée aux agences vérifiées', available: true },
+      { label: 'Messagerie encadrée, quota et blocage', available: true },
+      { label: 'Contacts illimités', available: false },
+      { label: 'Export des sélections', available: false },
+      { label: 'Publication de castings à l’unité incluse', available: false },
+      { label: 'Accompagnement dédié', available: false },
     ],
   },
 ];
@@ -81,29 +107,29 @@ export const PLAN_ADDONS = [
 
 export const PRICING_FAQ = [
   {
+    question: 'Puis-je souscrire une formule aujourd’hui ?',
+    answer:
+      'Non. Aucun paiement n’est ouvert : les contreparties payantes (photos supplémentaires, castings, filtres, statistiques, badge) ne sont pas encore livrées. La grille ci-dessous décrit ce qui sera inclus, avec les éléments déjà disponibles et ceux marqués « bientôt ».',
+  },
+  {
     question: 'Un abonnement garantit-il un contrat ?',
     answer:
-      'Non, et nous ne le dirons jamais. Un abonnement achète de la visibilité et des outils, jamais une promesse de recrutement. Toute personne qui vous promet un contrat contre de l’argent doit être signalée.',
+      'Non, et nous ne le dirons jamais. Un abonnement achètera de la visibilité et des outils, jamais une promesse de recrutement. Toute personne qui vous promet un contrat contre de l’argent doit être signalée.',
   },
   {
     question: 'Puis-je résilier à tout moment ?',
     answer:
-      'Oui. La résiliation prend effet à la fin de la période déjà payée : votre formule reste active jusqu’à cette date, puis votre profil repasse automatiquement en formule gratuite, sans perte de contenu.',
+      'Oui, dès que les formules seront ouvertes. La résiliation prendra effet à la fin de la période déjà payée : votre formule restera active jusqu’à cette date, puis votre profil repassera automatiquement en formule gratuite, sans perte de contenu.',
   },
   {
-    question: 'Quels moyens de paiement acceptez-vous ?',
+    question: 'Quels moyens de paiement accepterez-vous ?',
     answer:
-      'Le paiement se fait par Mobile Money via notre agrégateur local. La carte bancaire sera ajoutée une fois l’intégration validée avec notre prestataire.',
-  },
-  {
-    question: 'Les prix sont-ils définitifs ?',
-    answer:
-      'La grille affichée est la grille de lancement. Toute évolution sera annoncée avant application et ne modifiera jamais rétroactivement une période déjà payée.',
+      'Le paiement se fera par Mobile Money via notre agrégateur local. L’ouverture dépendra de la livraison des contreparties, pas seulement de l’intégration technique.',
   },
   {
     question: 'Mes coordonnées de paiement sont-elles stockées ?',
     answer:
-      'Jamais. Le paiement est traité par l’agrégateur ; ModelBénin ne conserve que la référence de transaction, le montant et le statut, afin d’établir votre facture et votre historique.',
+      'Jamais. Le paiement sera traité par l’agrégateur ; ModelBénin ne conservera que la référence de transaction, le montant et le statut, afin d’établir votre facture et votre historique.',
   },
 ] as const;
 

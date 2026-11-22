@@ -36,7 +36,7 @@ const ETAPES = [
       'Preuves contrôlées par l’équipe',
       'Badge confirmé visible',
       'Portfolio enrichi et réordonnable',
-      'Accès prioritaire aux castings',
+      'Visibilité élargie aux agences vérifiées',
     ],
     image: '/editorial/awa.jpg',
   },

@@ -16,7 +16,7 @@ import { SiteHeader } from '@/shared/components/SiteHeader';
 export const metadata: Metadata = {
   title: 'Talents',
   description:
-    'Des visages, pas des algorithmes : une sélection éditoriale de la maison ModelBénin, dans le respect du consentement de chaque modèle.',
+    'Des exemples illustratifs de présentation. Les profils réels sont réservés aux agences vérifiées, avec le consentement explicite de chaque modèle.',
 };
 
 const TALENTS = [
@@ -103,13 +103,13 @@ export default function TalentsPage() {
           }
           intro={
             <p>
-              Une sélection éditoriale de la maison. Les profils complets sont réservés aux agences
-              vérifiées, avec le consentement explicite de chaque modèle.
+              Des exemples de présentation, pas des profils inscrits. Les dossiers réels sont
+              réservés aux agences vérifiées, avec le consentement explicite de chaque modèle.
             </p>
           }
           image="/editorial/awa.jpg"
           imageAlt="Portrait éditorial d’une modèle confirmée"
-          note="Visuels d’illustration — les profils réels sont protégés et consentis"
+          note="Exemples illustratifs — aucun de ces profils n’est inscrit sur la plateforme"
         >
           <Magnetic>
             <Link
@@ -130,11 +130,11 @@ export default function TalentsPage() {
             <div className="flex flex-col justify-between gap-8 sm:flex-row sm:items-end">
               <div>
                 <Reveal>
-                  <p className="eyebrow">Sélection · Saison 01</p>
+                  <p className="eyebrow">Exemples · Saison 01</p>
                 </Reveal>
                 <Reveal delay={90}>
                   <h2 className="mt-6 max-w-xl font-display text-[clamp(2.5rem,4.6vw,4.2rem)] font-light leading-[0.98] tracking-sharpest">
-                    Six visages,
+                    Six exemples,
                     <br />
                     six <span className="italic text-gold-700">présences.</span>
                   </h2>
@@ -142,11 +142,20 @@ export default function TalentsPage() {
               </div>
               <Reveal delay={160}>
                 <p className="max-w-sm text-sm leading-7 text-ink-600">
-                  Chaque portrait est publié avec autorisation. Aucune image générée, aucun profil
-                  fantôme : uniquement des personnes qui ont dit oui.
+                  Ces prénoms et ces visuels sont des exemples illustratifs de mise en page. Ils ne
+                  correspondent pas à des profils inscrits et ne constituent ni une offre ni une
+                  promesse de recrutement.
                 </p>
               </Reveal>
             </div>
+
+            <Reveal delay={120}>
+              <div className="mt-10 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+                <strong>Exemples illustratifs.</strong> Aucun de ces profils n’est inscrit ni
+                contactable. Pour rencontrer de vrais talents, créez un compte agence et faites
+                vérifier votre organisation.
+              </div>
+            </Reveal>
 
             <div className="mt-16 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
               {TALENTS.map((talent, index) => (
@@ -179,7 +188,7 @@ export default function TalentsPage() {
                     </div>
                     <div className="flex items-center justify-between border-b border-ink-900/10 py-4">
                       <span className="text-[10px] uppercase tracking-widest text-ink-400">
-                        Dossier sur autorisation
+                        Exemple illustratif
                       </span>
                       <ArrowUpRightIcon className="h-4 w-4 text-ink-400 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:text-gold-600" />
                     </div>
@@ -190,7 +199,7 @@ export default function TalentsPage() {
 
             <Reveal delay={120}>
               <p className="mt-12 text-[10px] uppercase tracking-widest text-ink-400">
-                Visuels d’illustration — les profils réels sont protégés et consentis.
+                Exemples illustratifs — aucun de ces profils n’est inscrit sur la plateforme.
               </p>
             </Reveal>
           </div>

@@ -233,7 +233,7 @@ export default function HomePage() {
               <div className="col-span-2 mt-10 overflow-hidden bg-ink-900">
                 <img
                   src={IMAGES.heroSecond}
-                  alt="Second portrait de la sélection éditoriale"
+                  alt="Second portrait d’exemple"
                   className="aspect-[3/4] h-full w-full object-cover grayscale-[40%]"
                 />
               </div>
@@ -253,7 +253,7 @@ export default function HomePage() {
                     <div className="absolute inset-x-0 bottom-0 p-5">
                       <p className="font-display text-2xl leading-none">Awa Dossou</p>
                       <p className="mt-2 text-[9px] uppercase tracking-widest text-ivory-100/55">
-                        Cotonou · Profil confirmé
+                        Cotonou · Exemple illustratif
                       </p>
                     </div>
                   </div>
@@ -264,12 +264,12 @@ export default function HomePage() {
                   <div className="group relative aspect-[4/5] overflow-hidden bg-ink-900 shadow-lift">
                     <img
                       src={IMAGES.heroSecond}
-                      alt="Second portrait de la sélection éditoriale"
+                      alt="Second portrait d’exemple"
                       className="h-full w-full object-cover grayscale-[45%] transition duration-[1.4s] ease-expo group-hover:grayscale-0"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-transparent to-transparent" />
                     <span className="absolute left-3 top-3 rounded-full border border-white/25 bg-ink-950/50 px-3 py-1 text-[8px] font-semibold uppercase tracking-widest backdrop-blur">
-                      Vérifiée
+                      Exemple
                     </span>
                   </div>
                 </div>
@@ -483,7 +483,7 @@ export default function HomePage() {
               </div>
               <Reveal delay={160}>
                 <p className="max-w-sm text-sm leading-7 text-ink-600">
-                  Aperçu éditorial de la maison. Les profils complets sont réservés aux agences
+                  Exemples illustratifs de présentation. Les profils réels sont réservés aux agences
                   vérifiées, dans le respect du consentement de chaque modèle.
                 </p>
               </Reveal>
@@ -522,13 +522,13 @@ export default function HomePage() {
 
           <div className="container-editorial mt-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[10px] uppercase tracking-widest text-ink-400">
-              Visuels d’illustration — les profils réels sont protégés et consentis.
+              Exemples illustratifs — aucun de ces profils n’est inscrit sur la plateforme.
             </p>
             <Link
               href="/talents"
               className="group inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-ink-800 transition-colors duration-300 hover:text-gold-700"
             >
-              Voir la sélection
+              Voir les exemples
               <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>

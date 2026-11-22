@@ -21,7 +21,7 @@ import { PLAN_ADDONS, PRICING_FAQ } from '@/shared/lib/plans';
 export const metadata: Metadata = {
   title: 'Tarifs',
   description:
-    'Les formules ModelBénin : visibilité pour les modèles, outils de sélection pour les agences. Prix en francs CFA, sans engagement et sans promesse de contrat.',
+    'Les formules prévues pour ModelBénin : visibilité pour les modèles, outils de sélection pour les agences. Aucune souscription n’est ouverte aujourd’hui.',
 };
 
 const PRINCIPES = [
@@ -46,8 +46,9 @@ const INCLUS = [
   'Un profil gratuit et complet dès l’inscription',
   'Trois photos guidées modérées par un humain',
   'Une messagerie tracée et blocable',
-  'La résiliation en un clic, sans frais cachés',
-  'Une facture téléchargeable pour chaque paiement',
+  'La découverte réservée aux agences vérifiées',
+  'Des notifications in-app et par e-mail',
+  'L’export et la suppression de vos données',
 ];
 
 export default function PricingPage() {
@@ -68,13 +69,14 @@ export default function PricingPage() {
           }
           intro={
             <p>
-              Des formules lisibles, en francs CFA, sans engagement. Ce que vous payez, c’est du
-              temps, de la visibilité et des outils — pas un contrat de mannequinat.
+              Des formules lisibles, en francs CFA, sans engagement. Rien n’est encore payable :
+              les avantages payants seront ouverts quand ils seront réellement livrés — jamais
+              avant.
             </p>
           }
           image="/editorial/editorial-2.jpg"
           imageAlt="Silhouette éditoriale dans une lumière chaude"
-          note="Tarifs de lancement — toute évolution sera annoncée avant application"
+          note="Formules en préparation — aucun paiement ouvert"
         >
           <Magnetic>
             <a
@@ -105,9 +107,9 @@ export default function PricingPage() {
               </Reveal>
               <Reveal delay={160}>
                 <p className="mt-6 text-sm leading-7 text-ink-600">
-                  Chaque formule commence par un profil gratuit. Vous ajoutez ensuite le niveau de
-                  visibilité ou d’outils dont vous avez besoin, et vous pouvez revenir en arrière à
-                  tout moment.
+                  Chaque formule commencera par le profil gratuit actuel. Les avantages payants
+                  seront ajoutés au fur et à mesure de leur livraison, et signalés « bientôt » tant
+                  qu’ils ne sont pas disponibles.
                 </p>
               </Reveal>
             </div>
@@ -183,8 +185,9 @@ export default function PricingPage() {
                 </Reveal>
                 <Reveal delay={160}>
                   <p className="mt-7 max-w-sm text-sm leading-7 text-ink-600">
-                    Le badge vérifié, le boost de sept jours et le casting à l’unité sont des achats
-                    ponctuels. Ils seront ouverts après validation de l’intégration Mobile Money.
+                    Le badge vérifié, le boost de sept jours et le casting à l’unité sont prévus
+                    comme achats ponctuels. Ils seront ouverts après livraison des contreparties et
+                    validation de l’intégration Mobile Money.
                   </p>
                 </Reveal>
                 <Reveal delay={220}>
