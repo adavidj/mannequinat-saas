@@ -96,7 +96,13 @@ export function PricingBoard() {
         )}
       </div>
 
-      <div className="mt-14 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+        <strong>Aucun paiement n’est ouvert.</strong> Les formules ci-dessous décrivent ce qui sera
+        inclus. Les éléments marqués « Bientôt » ne sont pas encore livrés : ne souscrivez rien avant
+        leur ouverture officielle.
+      </div>
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-2">
         {plans.map((plan) => {
           const yearly = interval === 'YEARLY' ? plan.prices.YEARLY : null;
           const monthlyEquivalent =
@@ -160,46 +166,85 @@ export function PricingBoard() {
                 </p>
               ) : (
                 <p className={`mt-2 text-xs ${highlighted ? 'text-ivory-100/35' : 'text-ink-400'}`}>
-                  {interval === 'YEARLY' ? 'Facturation annuelle' : 'Résiliable à tout moment'}
+                  {plan.available
+                    ? interval === 'YEARLY'
+                      ? 'Facturation annuelle'
+                      : 'Résiliable à tout moment'
+                    : 'Prix de lancement — non facturé aujourd’hui'}
                 </p>
               )}
 
               <ul className="mt-8 space-y-3.5">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3 text-sm leading-6">
-                    <CheckIcon
-                      className={`mt-1 h-3.5 w-3.5 shrink-0 ${
-                        highlighted ? 'text-gold-300' : 'text-gold-600'
-                      }`}
-                    />
-                    <span className={highlighted ? 'text-ivory-100/75' : 'text-ink-600'}>
-                      {feature}
+                  <li key={feature.label} className="flex items-start gap-3 text-sm leading-6">
+                    {feature.available ? (
+                      <CheckIcon
+                        className={`mt-1 h-3.5 w-3.5 shrink-0 ${
+                          highlighted ? 'text-gold-300' : 'text-gold-600'
+                        }`}
+                      />
+                    ) : (
+                      <span
+                        className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest ${
+                          highlighted
+                            ? 'bg-white/10 text-ivory-100/70'
+                            : 'bg-ink-900/[0.06] text-ink-500'
+                        }`}
+                      >
+                        Bientôt
+                      </span>
+                    )}
+                    <span
+                      className={
+                        feature.available
+                          ? highlighted
+                            ? 'text-ivory-100/75'
+                            : 'text-ink-600'
+                          : highlighted
+                            ? 'text-ivory-100/40'
+                            : 'text-ink-400'
+                      }
+                    >
+                      {feature.label}
                     </span>
                   </li>
                 ))}
               </ul>
 
               <div className="mt-10 flex flex-col gap-3 pt-2">
+                {plan.available ? (
+                  <Link
+                    href="/inscription"
+                    className={`btn-shine group/cta inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest transition-colors duration-300 ${
+                      highlighted
+                        ? 'bg-gold-300 text-ink-950 hover:bg-gold-200'
+                        : 'bg-ink-950 text-ivory-50 hover:bg-brand-900'
+                    }`}
+                  >
+                    Choisir {plan.name}
+                    <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-300 group-hover/cta:translate-x-1" />
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className={`inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest ${
+                      highlighted
+                        ? 'bg-white/10 text-ivory-100/50'
+                        : 'border border-ink-900/15 bg-ink-900/[0.04] text-ink-500'
+                    }`}
+                  >
+                    Bientôt disponible
+                  </span>
+                )}
                 <Link
                   href="/inscription"
-                  className={`btn-shine group/cta inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[11px] font-bold uppercase tracking-widest transition-colors duration-300 ${
-                    highlighted
-                      ? 'bg-gold-300 text-ink-950 hover:bg-gold-200'
-                      : 'bg-ink-950 text-ivory-50 hover:bg-brand-900'
-                  }`}
-                >
-                  Choisir {plan.name}
-                  <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-300 group-hover/cta:translate-x-1" />
-                </Link>
-                <Link
-                  href="/connexion?next=%2Fdashboard%2Fabonnement"
                   className={`text-center text-[10px] font-semibold uppercase tracking-widest underline decoration-1 underline-offset-4 transition-colors ${
                     highlighted
                       ? 'text-ivory-100/45 hover:text-gold-200'
                       : 'text-ink-400 hover:text-gold-700'
                   }`}
                 >
-                  Déjà membre ? Gérer mon abonnement
+                  {plan.available ? 'Déjà membre ? Gérer mon abonnement' : 'Créer mon profil gratuit'}
                 </Link>
               </div>
             </article>
@@ -208,8 +253,8 @@ export function PricingBoard() {
       </div>
 
       <p className="mt-8 text-center text-xs leading-6 text-ink-400">
-        Sans engagement. Résiliation en un clic depuis votre espace, effective à la fin de la
-        période payée. Paiement Mobile Money sécurisé par notre agrégateur.
+        Sans engagement. Les formules seront résiliables en un clic depuis votre espace, avec effet à
+        la fin de la période payée. Aucun moyen de paiement n’est demandé aujourd’hui.
       </p>
     </div>
   );
