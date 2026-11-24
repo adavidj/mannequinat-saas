@@ -48,6 +48,7 @@ function createService() {
       notifications as never,
       mail as never,
       config as never,
+      {} as never,
     ),
     users,
     tokens,

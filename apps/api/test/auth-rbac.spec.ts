@@ -12,6 +12,7 @@ describe('AuthService basics', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     );
     expect(typeof auth.register).toBe('function');
     expect(typeof auth.login).toBe('function');

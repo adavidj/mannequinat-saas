@@ -120,6 +120,23 @@ export class TokenService {
   }
 
   signAccessToken(payload: { sub: string; role: string }) {
-    return this.jwt.sign(payload);
+    return this.jwt.sign({ ...payload, purpose: 'access' });
+  }
+
+  /** Jeton court utilisé uniquement pour terminer une connexion 2FA. */
+  signTwoFactorChallenge(userId: string): string {
+    return this.jwt.sign({ sub: userId, purpose: '2fa' }, { expiresIn: '5m' });
+  }
+
+  verifyTwoFactorChallenge(token: string): { userId: string } | null {
+    try {
+      const payload = this.jwt.verify<{ sub?: string; purpose?: string }>(token);
+      if (payload.purpose !== '2fa' || !payload.sub) {
+        return null;
+      }
+      return { userId: payload.sub };
+    } catch {
+      return null;
+    }
   }
 }
