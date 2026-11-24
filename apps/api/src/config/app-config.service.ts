@@ -175,6 +175,11 @@ export class AppConfigService implements OnModuleInit {
     return process.env.NODE_ENV ?? 'development';
   }
 
+  /** URL Redis ; le port par défaut est celui de docker-compose (6379). */
+  get redisUrl(): string {
+    return (process.env.REDIS_URL ?? 'redis://localhost:6379').trim();
+  }
+
   get mailApiKey(): string | null {
     return process.env.RESEND_API_KEY ?? null;
   }
