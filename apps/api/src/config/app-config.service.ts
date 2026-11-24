@@ -38,6 +38,28 @@ function readSecret(name: string): string {
   return value;
 }
 
+const DURATION_UNIT_MS = {
+  s: 1_000,
+  m: 60_000,
+  h: 3_600_000,
+  d: 86_400_000,
+} as const;
+
+/** Convertit une durée JWT (`15m`, `12h`, `7d`) en millisecondes. */
+export function parseDurationMs(value: string, name: string): number {
+  const match = /^(\d+)\s*([smhd])$/i.exec(value.trim());
+  if (!match) {
+    throw new Error(`${name} doit être une durée valide comme 15m, 12h ou 7d.`);
+  }
+  const amount = Number(match[1]);
+  const unit = (match[2] ?? '').toLowerCase() as keyof typeof DURATION_UNIT_MS;
+  const factor = DURATION_UNIT_MS[unit];
+  if (!Number.isFinite(amount) || amount <= 0 || !factor) {
+    throw new Error(`${name} doit être une durée positive comme 15m, 12h ou 7d.`);
+  }
+  return amount * factor;
+}
+
 @Injectable()
 export class PrismaServiceClient extends PrismaService {}
 
@@ -69,6 +91,11 @@ export class AppConfigService implements OnModuleInit {
     return process.env.JWT_REFRESH_TTL ?? '7d';
   }
 
+  /** Durée de vie des jetons de rafraîchissement en millisecondes. */
+  get jwtRefreshTtlMs(): number {
+    return parseDurationMs(this.jwtRefreshTtl, 'JWT_REFRESH_TTL');
+  }
+
   get emailVerificationTtlMinutes(): number {
     return Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? 60);
   }
@@ -98,6 +125,7 @@ export class AppConfigService implements OnModuleInit {
       () => this.jwtAccessSecret,
       () => this.jwtRefreshSecret,
       () => this.dataEncryptionKey,
+      () => this.jwtRefreshTtlMs,
     ]) {
       try {
         check();

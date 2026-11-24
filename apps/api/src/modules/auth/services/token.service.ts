@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AppConfigService } from '../../../config/app-config.service';
+import { FieldEncryptionService } from '../../../common/crypto/field-encryption.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import * as crypto from 'crypto';
+
+/**
+ * Fenêtre pendant laquelle un jeton déjà tourné peut être présenté à nouveau
+ * sans être considéré comme volé. Elle couvre les requêtes parallèles d'un
+ * même navigateur (onglets, préchargements) qui partagent le même cookie.
+ */
+export const REFRESH_REUSE_GRACE_MS = 60_000;
 
 function sha256(value: string): string {
   return crypto.createHash('sha256').update(value).digest('hex');
@@ -18,6 +26,7 @@ export class TokenService {
     private readonly jwt: JwtService,
     private readonly config: AppConfigService,
     private readonly prisma: PrismaService,
+    private readonly encryption: FieldEncryptionService,
   ) {}
 
   async issueEmailVerification(userId: string): Promise<string> {
@@ -80,20 +89,61 @@ export class TokenService {
     return { userId: record.userId };
   }
 
-  async issueRefreshToken(userId: string): Promise<string> {
+  async issueRefreshToken(userId: string, familyId: string = crypto.randomUUID()): Promise<string> {
     const token = randomToken();
     const tokenHash = sha256(token);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60_000);
+    const expiresAt = new Date(Date.now() + this.config.jwtRefreshTtlMs);
     await this.prisma.refreshToken.create({
       data: {
         userId,
         tokenHash,
         expiresAt,
+        familyId,
       },
     });
     return token;
   }
 
+  /**
+   * Jeton de remplacement encore valide dans la fenêtre de grâce. Stocké
+   * chiffré pour rester utilisable par une requête parallèle, jamais en clair.
+   */
+  private benignReplacement(
+    record: {
+      revokedAt: Date | null;
+      replacedAt: Date | null;
+      replacedByTokenEncrypted: string | null;
+    },
+    now: Date,
+  ): string | null {
+    if (!record.revokedAt || !record.replacedAt || !record.replacedByTokenEncrypted) {
+      return null;
+    }
+    if (now.getTime() - record.replacedAt.getTime() > REFRESH_REUSE_GRACE_MS) {
+      return null;
+    }
+    try {
+      return this.encryption.decrypt(record.replacedByTokenEncrypted);
+    } catch {
+      return null;
+    }
+  }
+
+  private async revokeFamily(familyId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { familyId, revokedAt: null },
+      data: { revokedAt: new Date(), replacedByTokenEncrypted: null },
+    });
+  }
+
+  /**
+   * Fait tourner un jeton de rafraîchissement de façon atomique.
+   *
+   * - Une requête parallèle qui présente le même jeton dans la fenêtre de
+   *   grâce reçoit le même remplaçant : elle n'est pas déconnectée.
+   * - Une réutilisation plus tardive est traitée comme un vol : toute la
+   *   famille est révoquée.
+   */
   async rotateRefreshToken(
     token: string,
   ): Promise<{ userId: string; refreshToken: string } | null> {
@@ -101,21 +151,63 @@ export class TokenService {
     const record = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
     });
-    if (!record || record.revokedAt || record.expiresAt < new Date()) {
+    if (!record) {
       return null;
     }
-    await this.prisma.refreshToken.update({
-      where: { id: record.id },
-      data: { revokedAt: new Date() },
+
+    const now = new Date();
+
+    if (record.revokedAt) {
+      const replacement = this.benignReplacement(record, now);
+      if (replacement) {
+        return { userId: record.userId, refreshToken: replacement };
+      }
+      await this.revokeFamily(record.familyId);
+      return null;
+    }
+
+    if (record.expiresAt <= now) {
+      return null;
+    }
+
+    const newToken = randomToken();
+    const claim = await this.prisma.refreshToken.updateMany({
+      where: { id: record.id, revokedAt: null, expiresAt: { gt: now } },
+      data: {
+        revokedAt: now,
+        replacedAt: now,
+        replacedByTokenEncrypted: this.encryption.encrypt(newToken),
+      },
     });
-    const newRefresh = await this.issueRefreshToken(record.userId);
-    return { userId: record.userId, refreshToken: newRefresh };
+
+    if (claim.count === 0) {
+      // Une requête parallèle a gagné la course : on lui emprunte son jeton
+      // tant qu'il est encore dans la fenêtre de grâce.
+      const current = await this.prisma.refreshToken.findUnique({ where: { id: record.id } });
+      const replacement = current ? this.benignReplacement(current, new Date()) : null;
+      if (replacement) {
+        return { userId: record.userId, refreshToken: replacement };
+      }
+      await this.revokeFamily(record.familyId);
+      return null;
+    }
+
+    await this.prisma.refreshToken.create({
+      data: {
+        userId: record.userId,
+        tokenHash: sha256(newToken),
+        expiresAt: new Date(now.getTime() + this.config.jwtRefreshTtlMs),
+        familyId: record.familyId,
+      },
+    });
+
+    return { userId: record.userId, refreshToken: newToken };
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
+      data: { revokedAt: new Date(), replacedByTokenEncrypted: null },
     });
   }
 
