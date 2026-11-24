@@ -9,6 +9,7 @@ const MANAGED_VARS = [
   'NODE_ENV',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
+  'JWT_REFRESH_TTL',
   'DATA_ENCRYPTION_KEY',
 ] as const;
 
@@ -126,5 +127,17 @@ describe('AppConfigService.validateEnvironment', () => {
     setValidSecrets();
     process.env.DATA_ENCRYPTION_KEY = 'A'.repeat(40);
     expect(() => config.validateEnvironment()).toThrow(/32 octets/);
+  });
+
+  it('refuse une durée de rafraîchissement invalide', () => {
+    const config = new AppConfigService();
+    setValidSecrets();
+    process.env.JWT_REFRESH_TTL = 'une semaine';
+    expect(() => config.validateEnvironment()).toThrow(/JWT_REFRESH_TTL/);
+  });
+
+  it('convertit la durée de rafraîchissement en millisecondes', () => {
+    process.env.JWT_REFRESH_TTL = '12h';
+    expect(new AppConfigService().jwtRefreshTtlMs).toBe(12 * 60 * 60_000);
   });
 });

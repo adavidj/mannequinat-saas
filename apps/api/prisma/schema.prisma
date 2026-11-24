@@ -402,11 +402,17 @@ model RefreshToken {
   id        String   @id @default(cuid())
   userId    String
   tokenHash String   @unique
+  /** Famille de jetons issue d'une même connexion, révoquée en bloc en cas de réutilisation. */
+  familyId  String
   expiresAt DateTime
   revokedAt DateTime?
+  /** Rotation récente : permet à deux requêtes parallèles de récupérer le même jeton. */
+  replacedByTokenEncrypted String?
+  replacedAt               DateTime?
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+  @@index([familyId])
 }
