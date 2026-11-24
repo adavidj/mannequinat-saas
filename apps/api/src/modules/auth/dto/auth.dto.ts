@@ -35,9 +35,25 @@ export type RegisterDto = z.infer<typeof registerSchema>;
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  twoFactorCode: z
+    .string()
+    .regex(/^\d{6}$/, 'Le code de vérification doit contenir six chiffres')
+    .optional(),
 });
 
 export type LoginDto = z.infer<typeof loginSchema>;
+
+export const twoFactorChallengeSchema = z.object({
+  challengeToken: z.string().min(1),
+});
+
+export type TwoFactorChallengeDto = z.infer<typeof twoFactorChallengeSchema>;
+
+export const twoFactorCodeSchema = twoFactorChallengeSchema.extend({
+  code: z.string().regex(/^\d{6}$/, 'Le code de vérification doit contenir six chiffres'),
+});
+
+export type TwoFactorCodeDto = z.infer<typeof twoFactorCodeSchema>;
 
 export const verifyEmailSchema = z.object({
   token: z.string().min(1),

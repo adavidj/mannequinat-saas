@@ -10,6 +10,7 @@ import { ConfigModule } from '../../config/config.module';
 import { AppConfigService } from '../../config/app-config.service';
 import { AuditModule } from '../../audit/audit.module';
 import { MailModule } from '../../mail/mail.module';
+import { FieldEncryptionService } from '../../common/crypto/field-encryption.service';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { MailModule } from '../../mail/mail.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenService, JwtStrategy],
+  providers: [AuthService, TokenService, JwtStrategy, FieldEncryptionService],
   exports: [AuthService],
 })
 export class AuthModule {}

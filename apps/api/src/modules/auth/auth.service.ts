@@ -10,8 +10,10 @@ import { UsersService } from '../users/users.service';
 import { TokenService } from './services/token.service';
 import { AuditService } from '../../audit/audit.service';
 import { AppConfigService } from '../../config/app-config.service';
+import { FieldEncryptionService } from '../../common/crypto/field-encryption.service';
 import { MailService } from '../../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { buildOtpauthUrl, generateTotpSecret, verifyTotpCode } from './services/totp.service';
 import * as argon2 from 'argon2';
 import { UserRole } from '@prisma/client';
 import { calculateAge } from '../../common/utils/age';
@@ -40,6 +42,7 @@ export class AuthService {
     private readonly notifications: NotificationsService,
     private readonly mail: MailService,
     private readonly config: AppConfigService,
+    private readonly encryption: FieldEncryptionService,
   ) {}
 
   async register(input: {
@@ -129,6 +132,7 @@ export class AuthService {
   async login(input: {
     email: string;
     password: string;
+    twoFactorCode?: string;
     ipAddress?: string | null;
     userAgent?: string | null;
   }) {
@@ -144,6 +148,70 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants incorrects.');
     }
 
+    // Les administrateurs n'obtiennent une session qu'après un second facteur
+    // TOTP. Tant que la 2FA n'est pas activée, la connexion ne renvoie qu'un
+    // jeton court permettant de terminer l'enrôlement : aucun accès au
+    // back-office n'est possible entre-temps.
+    if (user.role === 'ADMIN') {
+      if (!user.twoFactorEnabledAt) {
+        return {
+          twoFactorSetupRequired: true,
+          challengeToken: this.tokens.signTwoFactorChallenge(user.id),
+        };
+      }
+      if (!input.twoFactorCode) {
+        return {
+          twoFactorRequired: true,
+          challengeToken: this.tokens.signTwoFactorChallenge(user.id),
+        };
+      }
+      if (!this.checkTwoFactorCode(user, input.twoFactorCode)) {
+        await this.logTwoFactorFailure(user.id, input);
+        throw new UnauthorizedException('Code de vérification invalide.');
+      }
+    }
+
+    return this.issueSession(user, input);
+  }
+
+  private checkTwoFactorCode(
+    user: { twoFactorSecretEncrypted: string | null },
+    code: string,
+  ): boolean {
+    if (!user.twoFactorSecretEncrypted) {
+      return false;
+    }
+    try {
+      return verifyTotpCode(this.encryption.decrypt(user.twoFactorSecretEncrypted), code);
+    } catch {
+      return false;
+    }
+  }
+
+  private async logTwoFactorFailure(
+    userId: string,
+    input: { ipAddress?: string | null; userAgent?: string | null },
+  ): Promise<void> {
+    this.logger.warn(`Code 2FA invalide pour l'utilisateur ${userId}.`);
+    await this.audit.log({
+      actorId: userId,
+      action: 'auth.2fa_failed',
+      entityType: 'user',
+      entityId: userId,
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
+    });
+  }
+
+  private async issueSession(
+    user: {
+      id: string;
+      email: string;
+      role: UserRole;
+      emailVerifiedAt: Date | null;
+    },
+    input: { ipAddress?: string | null; userAgent?: string | null },
+  ) {
     const refreshToken = await this.tokens.issueRefreshToken(user.id);
     const accessToken = this.tokens.signAccessToken({ sub: user.id, role: user.role });
 
@@ -166,6 +234,85 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  /** Charge l'utilisateur visé par un jeton de défi 2FA, ou refuse. */
+  private async resolveTwoFactorChallenge(challengeToken: string) {
+    const challenge = this.tokens.verifyTwoFactorChallenge(challengeToken);
+    if (!challenge) {
+      throw new UnauthorizedException('Jeton de vérification invalide ou expiré.');
+    }
+    const user = await this.users.findById(challenge.userId);
+    if (!user || user.status !== 'ACTIVE' || user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Jeton de vérification invalide ou expiré.');
+    }
+    return user;
+  }
+
+  /**
+   * Génère un secret TOTP pour l'administrateur connecté (mot de passe déjà
+   * vérifié). Le secret n'est affiché qu'une fois ; il est stocké chiffré.
+   */
+  async beginTwoFactorSetup(input: { challengeToken: string }) {
+    const user = await this.resolveTwoFactorChallenge(input.challengeToken);
+    if (user.twoFactorEnabledAt) {
+      throw new ConflictException('La double authentification est déjà activée.');
+    }
+
+    const secret = generateTotpSecret();
+    await this.users.setTwoFactorSecret(user.id, this.encryption.encrypt(secret));
+
+    return {
+      secret,
+      otpauthUrl: buildOtpauthUrl(secret, user.email),
+    };
+  }
+
+  /** Active la 2FA après vérification d'un premier code, puis ouvre la session. */
+  async enableTwoFactor(input: {
+    challengeToken: string;
+    code: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }) {
+    const user = await this.resolveTwoFactorChallenge(input.challengeToken);
+    if (!this.checkTwoFactorCode(user, input.code)) {
+      await this.logTwoFactorFailure(user.id, input);
+      throw new UnauthorizedException('Code de vérification invalide.');
+    }
+
+    await this.users.enableTwoFactor(user.id);
+    await this.audit.log({
+      actorId: user.id,
+      action: 'auth.2fa_enabled',
+      entityType: 'user',
+      entityId: user.id,
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
+    });
+
+    return this.issueSession(user, input);
+  }
+
+  /** Termine une connexion administrateur déjà enrôlé en 2FA. */
+  async verifyTwoFactorLogin(input: {
+    challengeToken: string;
+    code: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }) {
+    const user = await this.resolveTwoFactorChallenge(input.challengeToken);
+    if (!user.twoFactorEnabledAt) {
+      throw new UnauthorizedException(
+        'La double authentification doit être activée avant de continuer.',
+      );
+    }
+    if (!this.checkTwoFactorCode(user, input.code)) {
+      await this.logTwoFactorFailure(user.id, input);
+      throw new UnauthorizedException('Code de vérification invalide.');
+    }
+
+    return this.issueSession(user, input);
   }
 
   async verifyEmail(input: {
@@ -326,6 +473,11 @@ export class AuthService {
     }
     const user = await this.users.findById(rotated.userId);
     if (!user || user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Compte non autorisé.');
+    }
+    // Un administrateur sans 2FA ne peut pas rafraîchir sa session : le jeton
+    // de rafraîchissement existant est révoqué au profit d'un nouvel enrôlement.
+    if (user.role === 'ADMIN' && !user.twoFactorEnabledAt) {
       throw new UnauthorizedException('Compte non autorisé.');
     }
     const accessToken = this.tokens.signAccessToken({ sub: user.id, role: user.role });

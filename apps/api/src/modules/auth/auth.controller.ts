@@ -6,6 +6,8 @@ import {
   refreshSchema,
   registerSchema,
   resetPasswordSchema,
+  twoFactorChallengeSchema,
+  twoFactorCodeSchema,
   verifyEmailSchema,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -43,12 +45,50 @@ export class AuthController {
   @Public()
   @Post('login')
   async login(
-    @Body(new ZodValidationPipe(loginSchema)) body: { email: string; password: string },
+    @Body(new ZodValidationPipe(loginSchema))
+    body: { email: string; password: string; twoFactorCode?: string },
     @Req() req: Request,
   ) {
     return this.auth.login({
       email: body.email,
       password: body.password,
+      twoFactorCode: body.twoFactorCode,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    });
+  }
+
+  @Public()
+  @Post('2fa/setup')
+  async twoFactorSetup(
+    @Body(new ZodValidationPipe(twoFactorChallengeSchema)) body: { challengeToken: string },
+  ) {
+    return this.auth.beginTwoFactorSetup({ challengeToken: body.challengeToken });
+  }
+
+  @Public()
+  @Post('2fa/enable')
+  async twoFactorEnable(
+    @Body(new ZodValidationPipe(twoFactorCodeSchema)) body: { challengeToken: string; code: string },
+    @Req() req: Request,
+  ) {
+    return this.auth.enableTwoFactor({
+      challengeToken: body.challengeToken,
+      code: body.code,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    });
+  }
+
+  @Public()
+  @Post('2fa/verify')
+  async twoFactorVerify(
+    @Body(new ZodValidationPipe(twoFactorCodeSchema)) body: { challengeToken: string; code: string },
+    @Req() req: Request,
+  ) {
+    return this.auth.verifyTwoFactorLogin({
+      challengeToken: body.challengeToken,
+      code: body.code,
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     });

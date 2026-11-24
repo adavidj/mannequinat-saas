@@ -47,6 +47,20 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  // Un administrateur reçoit d'abord un défi 2FA, jamais une session directe.
+  const challenge = payload as {
+    twoFactorSetupRequired?: boolean;
+    twoFactorRequired?: boolean;
+    challengeToken?: string;
+  };
+  if (challenge.challengeToken) {
+    return NextResponse.json({
+      twoFactorSetupRequired: Boolean(challenge.twoFactorSetupRequired),
+      twoFactorRequired: Boolean(challenge.twoFactorRequired),
+      challengeToken: challenge.challengeToken,
+    });
+  }
+
   const auth = payload as AuthResponse;
   const response = NextResponse.json({ user: auth.user });
   setSessionCookies(response, auth);

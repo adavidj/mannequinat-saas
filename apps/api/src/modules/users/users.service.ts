@@ -62,6 +62,20 @@ export class UsersService {
     });
   }
 
+  async setTwoFactorSecret(userId: string, encryptedSecret: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorSecretEncrypted: encryptedSecret, twoFactorEnabledAt: null },
+    });
+  }
+
+  async enableTwoFactor(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabledAt: new Date() },
+    });
+  }
+
   async listForAdmin(filters: ListUsersDto) {
     const where = {
       ...(filters.role ? { role: filters.role } : {}),
