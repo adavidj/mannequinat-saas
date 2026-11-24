@@ -143,10 +143,43 @@ export class AuthService {
     if (user.status !== 'ACTIVE') {
       throw new UnauthorizedException('Compte suspendu ou supprimé.');
     }
-    const valid = await argon2.verify(user.passwordHash, input.password);
-    if (!valid) {
+    // Message volontairement identique à celui d'un mauvais mot de passe : le
+    // verrouillage ne doit pas révéler l'existence du compte.
+    if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+      await this.audit.log({
+        actorId: user.id,
+        action: 'auth.login_locked',
+        entityType: 'user',
+        entityId: user.id,
+        metadata: { lockedUntil: user.lockedUntil.toISOString() },
+        ipAddress: input.ipAddress,
+        userAgent: input.userAgent,
+      });
       throw new UnauthorizedException('Identifiants incorrects.');
     }
+
+    const valid = await argon2.verify(user.passwordHash, input.password);
+    if (!valid) {
+      const failure = await this.users.recordFailedLogin(user.id);
+      this.logger.warn(
+        `Échec de connexion pour ${user.id} (tentative ${failure.attempts}).`,
+      );
+      await this.audit.log({
+        actorId: user.id,
+        action: 'auth.login_failed',
+        entityType: 'user',
+        entityId: user.id,
+        metadata: {
+          attempts: failure.attempts,
+          lockedUntil: failure.lockedUntil?.toISOString() ?? null,
+        },
+        ipAddress: input.ipAddress,
+        userAgent: input.userAgent,
+      });
+      throw new UnauthorizedException('Identifiants incorrects.');
+    }
+
+    await this.users.clearLoginFailures(user.id);
 
     // Les administrateurs n'obtiennent une session qu'après un second facteur
     // TOTP. Tant que la 2FA n'est pas activée, la connexion ne renvoie qu'un

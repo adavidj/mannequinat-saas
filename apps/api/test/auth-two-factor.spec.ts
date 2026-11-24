@@ -20,6 +20,8 @@ type StoredUser = {
   emailVerifiedAt: Date | null;
   twoFactorSecretEncrypted: string | null;
   twoFactorEnabledAt: Date | null;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
 };
 
 async function makeUser(overrides: Partial<StoredUser> = {}): Promise<StoredUser> {
@@ -32,6 +34,8 @@ async function makeUser(overrides: Partial<StoredUser> = {}): Promise<StoredUser
     emailVerifiedAt: new Date(),
     twoFactorSecretEncrypted: null,
     twoFactorEnabledAt: null,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
     ...overrides,
   };
 }
@@ -42,6 +46,8 @@ function buildAuth(user: StoredUser) {
     findById: vi.fn().mockResolvedValue(user),
     setTwoFactorSecret: vi.fn().mockResolvedValue(undefined),
     enableTwoFactor: vi.fn().mockResolvedValue(undefined),
+    recordFailedLogin: vi.fn().mockResolvedValue({ attempts: 1, lockedUntil: null }),
+    clearLoginFailures: vi.fn().mockResolvedValue(undefined),
   } as unknown as UsersService & {
     setTwoFactorSecret: ReturnType<typeof vi.fn>;
     enableTwoFactor: ReturnType<typeof vi.fn>;

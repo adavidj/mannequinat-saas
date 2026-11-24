@@ -4,6 +4,7 @@ import { UserRole, UserStatus } from '@prisma/client';
 import { AuditService } from '../../audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { loginLockDelayMs } from '../auth/services/login-lockout';
 import { ListUsersDto, UpdateUserStatusDto } from './dto/admin-user.dto';
 
 type AuditContext = {
@@ -58,7 +59,38 @@ export class UsersService {
   async updatePassword(userId: string, passwordHash: string) {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: { passwordHash, failedLoginAttempts: 0, lockedUntil: null },
+    });
+  }
+
+  /**
+   * Incrémente le compteur d'échecs et applique le verrouillage progressif.
+   * Le compteur est remis à zéro par une connexion réussie.
+   */
+  async recordFailedLogin(userId: string): Promise<{ attempts: number; lockedUntil: Date | null }> {
+    const { failedLoginAttempts } = await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: { increment: 1 } },
+      select: { failedLoginAttempts: true },
+    });
+
+    const delayMs = loginLockDelayMs(failedLoginAttempts);
+    if (delayMs === 0) {
+      return { attempts: failedLoginAttempts, lockedUntil: null };
+    }
+
+    const lockedUntil = new Date(Date.now() + delayMs);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lockedUntil },
+    });
+    return { attempts: failedLoginAttempts, lockedUntil };
+  }
+
+  async clearLoginFailures(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: 0, lockedUntil: null },
     });
   }
 
