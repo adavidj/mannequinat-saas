@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname, '../..'),
   },
+  experimental: {
+    // Rappels de mise à jour de sécurité gérés par `next upgrade --agent`.
+    agentUpgrade: 'security',
+  },
   async headers() {
     return [
       {
