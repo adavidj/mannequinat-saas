@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { EmailVerifiedRequired } from '../../common/decorators/email-verified.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AccountService } from './account.service';
 import { DeleteAccountDto, deleteAccountSchema } from './dto/delete-account.dto';
@@ -10,6 +11,7 @@ import { DeleteAccountDto, deleteAccountSchema } from './dto/delete-account.dto'
 type AuthenticatedUser = { id: string };
 
 @Controller('account')
+@EmailVerifiedRequired()
 export class AccountController {
   constructor(private readonly account: AccountService) {}
 

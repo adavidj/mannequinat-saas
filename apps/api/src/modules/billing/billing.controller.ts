@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { EmailVerifiedRequired } from '../../common/decorators/email-verified.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { BillingService } from './billing.service';
 import {
@@ -13,6 +14,7 @@ import {
 type AuthenticatedUser = { id: string };
 
 @Controller('billing')
+@EmailVerifiedRequired()
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
 
